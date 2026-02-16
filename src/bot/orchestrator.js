@@ -38,7 +38,7 @@ function buildTools(userId) {
   return [
     {
       name: 'search_listings',
-      description: 'Search marketplace listings by keyword, category, or price range. Returns matching listings from the database.',
+      description: 'Search marketplace listings. Call with no params to get latest listings. Use query for keyword search, category to filter, minPrice/maxPrice for price range. Always call this when users want to browse or see listings.',
       parameters: {
         type: 'object',
         properties: {
