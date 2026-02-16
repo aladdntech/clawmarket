@@ -93,6 +93,16 @@ const createReviewSchema = z.object({
   comment: z.string().max(2000).optional()
 });
 
+// ─── Domains Schemas ────────────────────────────────────────
+const createSubdomainProvisionSchema = z.object({
+  subdomain: z.string().min(3).max(63).regex(/^[a-z0-9-]+$/i),
+  targetIp: z.string().regex(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/, 'Invalid IPv4 address').optional(),
+  targetUrl: z.string().url().optional()
+}).refine(
+  data => !(data.targetIp && data.targetUrl),
+  { message: 'Provide either targetIp or targetUrl, not both' }
+);
+
 // Helper to validate and return clean data or throw
 function validate(schema, data) {
   const result = schema.safeParse(data);
@@ -114,5 +124,6 @@ module.exports = {
   createOrderSchema,
   createDisputeSchema,
   createReviewSchema,
+  createSubdomainProvisionSchema,
   validate
 };

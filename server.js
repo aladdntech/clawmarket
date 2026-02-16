@@ -180,6 +180,14 @@ function loadRoutes() {
     console.warn('⚠️  Admin routes not ready:', err.message);
   }
 
+  try {
+    const domainRoutes = require('./src/domains/routes');
+    app.use(domainRoutes);
+    console.log('✅ Domain routes loaded');
+  } catch (err) {
+    console.warn('⚠️  Domain routes not ready:', err.message);
+  }
+
   // ─── Error Handler (AFTER all routes) ───────────────────
   app.use(errorHandler);
 
