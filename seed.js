@@ -14,7 +14,7 @@ async function seed() {
 
   // Users
   const users = [
-    { name: 'Sofia Martinez', email: 'sofia@example.com', country: 'AR', wallets: [{ network: 'tron', address: 'TDemo1Sofia', label: 'main' }], createdAt: new Date(), updatedAt: new Date() },
+    { name: 'Sofia Martinez', email: 'sofia@example.com', country: 'AR', role: 'admin', wallets: [{ network: 'tron', address: 'TDemo1Sofia', label: 'main' }], createdAt: new Date(), updatedAt: new Date() },
     { name: 'James Chen', email: 'james@example.com', country: 'US', wallets: [{ network: 'tron', address: 'TDemo2James', label: 'main' }], createdAt: new Date(), updatedAt: new Date() },
     { name: 'Aisha Patel', email: 'aisha@example.com', country: 'IN', wallets: [{ network: 'tron', address: 'TDemo3Aisha', label: 'main' }], createdAt: new Date(), updatedAt: new Date() },
     { name: 'Erik Svensson', email: 'erik@example.com', country: 'SE', wallets: [{ network: 'tron', address: 'TDemo4Erik', label: 'main' }], createdAt: new Date(), updatedAt: new Date() },

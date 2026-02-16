@@ -3,119 +3,156 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ClawMarket — AI-Powered Marketplace</title>
+  <title>ClawMarket — AI Marketplace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0c0f12;
-      --bg-2: #12171c;
-      --card: #151b21;
-      --muted: #9aa4b2;
-      --text: #e7edf3;
+      --bg: #0b0f14;
+      --bg-2: #0f1620;
+      --card: #141c26;
+      --card-2: #101720;
+      --border: rgba(255,255,255,0.08);
+      --text: #e9eef5;
+      --muted: #9aa7b8;
       --accent: #00d4aa;
-      --accent-2: #00a98a;
+      --accent-2: #8bf1d8;
       --danger: #ff6b6b;
       --success: #3ddc97;
-      --border: rgba(255,255,255,0.08);
-      --shadow: 0 12px 30px rgba(0,0,0,0.35);
+      --shadow: 0 18px 40px rgba(0,0,0,.35);
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --radius-sm: 10px;
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
     body {
-      margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
-      background: radial-gradient(1200px 600px at 10% -10%, rgba(0,212,170,.18), transparent), var(--bg);
+      margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
       color: var(--text);
+      background: radial-gradient(1200px 600px at 10% -10%, rgba(0,212,170,.18), transparent), var(--bg);
     }
     a { color: inherit; text-decoration: none; }
-    img { max-width: 100%; }
-
+    img { max-width: 100%; display: block; }
     .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 
-    /* Nav */
+    /* Header */
     .nav {
-      position: sticky; top: 0; z-index: 50; backdrop-filter: blur(10px);
-      background: rgba(12,15,18,0.8); border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 50; backdrop-filter: blur(12px);
+      background: rgba(11,15,20,0.86); border-bottom: 1px solid var(--border);
     }
-    .nav-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; }
-    .logo { font-weight: 700; font-size: 18px; display: flex; gap: 10px; align-items: center; }
-    .nav-links { display: flex; gap: 16px; font-size: 14px; }
-    .nav-links a { padding: 8px 10px; border-radius: 8px; color: var(--muted); transition: .2s; }
-    .nav-links a.active, .nav-links a:hover { background: rgba(0,212,170,.12); color: var(--text); }
-    .wallet-pill { font-size: 12px; border: 1px solid var(--border); padding: 6px 10px; border-radius: 999px; color: var(--muted); }
+    .nav-inner { display: flex; align-items: center; gap: 16px; padding: 14px 0; }
+    .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -.02em; }
+    .logo span { font-size: 20px; }
+    .nav-links { display: flex; gap: 6px; margin-left: 8px; }
+    .nav-links a {
+      padding: 8px 12px; border-radius: 999px; font-size: 13px; color: var(--muted); transition: .2s;
+    }
+    .nav-links a.active, .nav-links a:hover {
+      background: rgba(0,212,170,.14); color: var(--text);
+    }
+    .nav-search { flex: 1; display: flex; justify-content: center; }
+    .search-bar {
+      width: 100%; max-width: 420px; display: flex; gap: 8px; background: var(--bg-2); border: 1px solid var(--border);
+      border-radius: 999px; padding: 8px 12px; align-items: center;
+    }
+    .search-bar input {
+      flex: 1; background: transparent; border: none; color: var(--text); outline: none; font-size: 13px;
+    }
+    .auth-actions { display: flex; gap: 8px; align-items: center; }
+    .pill {
+      padding: 8px 12px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); font-size: 12px;
+    }
+
+    /* Buttons */
+    .btn {
+      background: var(--accent); color: #03110d; border: none; padding: 10px 16px; border-radius: 10px; font-weight: 700;
+      cursor: pointer; transition: .2s; display: inline-flex; align-items: center; gap: 8px; font-size: 13px;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 12px 22px rgba(0,212,170,.25); }
+    .btn.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn.ghost { background: transparent; color: var(--muted); border: none; }
+
+    /* Layout */
+    main { min-height: 70vh; }
+    section { padding: 30px 0; }
+    .view { animation: fadeIn .25s ease; }
+    @keyframes fadeIn { from { opacity: .3; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
     /* Hero */
-    .hero { padding: 80px 0 30px; display: grid; gap: 24px; grid-template-columns: 1.1fr .9fr; align-items: center; }
-    .hero h1 { font-size: 44px; margin: 0 0 10px; letter-spacing: -.02em; }
+    .hero { display: grid; gap: 28px; grid-template-columns: 1.1fr .9fr; align-items: center; padding: 60px 0 10px; }
+    .hero h1 { font-size: 46px; margin: 0 0 10px; letter-spacing: -.02em; }
     .hero p { color: var(--muted); margin: 0 0 20px; line-height: 1.6; }
-    .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
-    .btn {
-      background: var(--accent); color: #03110d; border: none; padding: 12px 18px; border-radius: 10px; font-weight: 600;
-      cursor: pointer; transition: .2s; display: inline-flex; align-items: center; gap: 8px;
-    }
-    .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 20px rgba(0,212,170,.2); }
-    .btn.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
-
     .hero-card {
-      background: linear-gradient(180deg, rgba(0,212,170,0.15), transparent 50%), var(--card);
-      border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: var(--shadow);
+      background: linear-gradient(180deg, rgba(0,212,170,0.16), transparent 50%), var(--card);
+      border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px; box-shadow: var(--shadow);
     }
-    .hero-card h3 { margin: 0 0 8px; }
-
-    /* Sections */
-    section { padding: 30px 0; }
-    .section-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-    .section-title h2 { margin: 0; font-size: 22px; }
-    .section-title small { color: var(--muted); }
-
-    /* Stats */
-    .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
-    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
-    .stat-card h3 { margin: 0; font-size: 24px; }
-    .stat-card span { color: var(--muted); font-size: 12px; }
+    .hero-card h3 { margin: 0 0 12px; }
+    .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
 
     /* Cards */
     .grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
     .card {
-      background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden;
       transition: .25s; box-shadow: 0 6px 18px rgba(0,0,0,.2);
     }
     .card:hover { transform: translateY(-4px); box-shadow: 0 18px 35px rgba(0,0,0,.35); border-color: rgba(0,212,170,.4); }
     .card-body { padding: 14px; }
-    .badge { font-size: 11px; padding: 4px 8px; border-radius: 999px; background: rgba(0,212,170,.15); color: var(--accent); border: 1px solid rgba(0,212,170,.35); }
-    .price { font-weight: 700; }
-    .muted { color: var(--muted); }
 
     .img-placeholder {
-      height: 150px; background: linear-gradient(135deg, rgba(0,212,170,.2), rgba(255,255,255,0.03));
-      display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 24px;
+      height: 160px; background: linear-gradient(135deg, rgba(0,212,170,.2), rgba(255,255,255,0.03));
+      display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 30px;
     }
+    .badge {
+      font-size: 11px; padding: 4px 8px; border-radius: 999px; background: rgba(0,212,170,.15);
+      color: var(--accent); border: 1px solid rgba(0,212,170,.35);
+    }
+    .tag {
+      font-size: 11px; padding: 4px 8px; border-radius: 999px; background: rgba(255,255,255,.06); color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .price { font-weight: 800; }
+    .muted { color: var(--muted); }
 
-    /* Browse */
-    .filters { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin: 10px 0 20px; }
+    /* Categories */
+    .category-card {
+      display: flex; gap: 12px; align-items: center; padding: 14px; border-radius: var(--radius-md);
+      background: var(--card); border: 1px solid var(--border); transition: .2s;
+    }
+    .category-card:hover { border-color: rgba(0,212,170,.45); transform: translateY(-2px); }
+    .category-icon { font-size: 24px; }
+
+    /* Browse filters */
+    .filters { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 12px; margin: 16px 0 20px; }
     .input, select, textarea {
-      width: 100%; background: var(--bg-2); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px;
+      width: 100%; background: var(--bg-2); color: var(--text); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 12px; font-family: inherit; font-size: 13px;
     }
 
-    /* Listing detail */
+    /* Detail */
     .detail { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
-    .seller-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+    .detail-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; }
 
-    /* Agents */
-    .rating { color: #ffd36a; font-size: 12px; }
+    /* Sections */
+    .section-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .section-title h2 { margin: 0; font-size: 22px; }
 
-    /* Sell */
-    .stepper { display: flex; gap: 8px; margin-bottom: 14px; }
-    .step { padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); font-size: 12px; }
-    .step.active { background: rgba(0,212,170,.15); color: var(--accent); border-color: rgba(0,212,170,.4); }
+    /* Dashboard */
+    .stat-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+    .stat {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px;
+    }
 
     /* Footer */
     footer { border-top: 1px solid var(--border); margin-top: 40px; padding: 24px 0; color: var(--muted); }
 
     /* Modal */
-    .modal {
-      position: fixed; inset: 0; background: rgba(0,0,0,.55); display: none; align-items: center; justify-content: center; z-index: 99;
-    }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: none; align-items: center; justify-content: center; z-index: 99; }
     .modal.open { display: flex; }
-    .modal-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; max-width: 480px; width: 92%; }
+    .modal-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; max-width: 520px; width: 94%; }
+    .tab-row { display: flex; gap: 8px; margin-bottom: 12px; }
+    .tab { padding: 8px 12px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); font-size: 12px; cursor: pointer; }
+    .tab.active { background: rgba(0,212,170,.15); color: var(--accent); border-color: rgba(0,212,170,.4); }
 
     /* Loading */
     .loading { display: inline-flex; gap: 8px; align-items: center; color: var(--muted); }
@@ -124,25 +161,23 @@
     .dot:nth-child(3){ animation-delay: .4s; }
     @keyframes pulse { 0% { opacity:.2; } 50% { opacity: 1; } 100% { opacity:.2; } }
 
-    /* Transitions */
-    .view { animation: fadeIn .25s ease; }
-    @keyframes fadeIn { from { opacity: .3; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-
     /* Responsive */
-    @media (max-width: 900px) {
+    @media (max-width: 980px) {
       .hero { grid-template-columns: 1fr; }
-      .stats { grid-template-columns: repeat(2,1fr); }
       .grid { grid-template-columns: repeat(2,1fr); }
       .detail { grid-template-columns: 1fr; }
-      .filters { grid-template-columns: 1fr; }
-      .nav-inner { flex-wrap: wrap; gap: 10px; }
+      .filters { grid-template-columns: 1fr 1fr; }
+      .nav-inner { flex-wrap: wrap; }
+      .nav-search { order: 3; width: 100%; }
     }
-    @media (max-width: 600px) {
+    @media (max-width: 640px) {
       .grid { grid-template-columns: 1fr; }
-      .hero h1 { font-size: 32px; }
+      .hero h1 { font-size: 34px; }
+      .filters { grid-template-columns: 1fr; }
+      .stat-row { grid-template-columns: 1fr; }
     }
 
-    /* Chat Widget */
+    /* Chat Widget (kept as-is) */
     .chat-widget { position: fixed; right: 22px; bottom: 22px; z-index: 120; font-family: inherit; }
     .chat-fab {
       width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer;
@@ -187,13 +222,8 @@
     .chat-link { color: var(--accent); text-decoration: underline; }
     .chat-meta { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
-    .chat-input {
-      border-top: 1px solid var(--border); padding: 12px; display: flex; gap: 8px; background: var(--card);
-    }
-    .chat-input input {
-      flex: 1; background: var(--bg-2); color: var(--text); border: 1px solid var(--border);
-      border-radius: 10px; padding: 10px 12px;
-    }
+    .chat-input { border-top: 1px solid var(--border); padding: 12px; display: flex; gap: 8px; background: var(--card); }
+    .chat-input input { flex: 1; background: var(--bg-2); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
     .chat-send { background: var(--accent); border: none; color: #04241d; border-radius: 10px; padding: 10px 14px; font-weight: 600; cursor: pointer; }
     .chat-send:disabled { opacity: .6; cursor: not-allowed; }
 
@@ -208,9 +238,7 @@
 
     @media (max-width: 680px) {
       .chat-widget { right: 12px; bottom: 12px; }
-      .chat-panel {
-        position: fixed; right: 0; left: 0; bottom: 0; top: 0; width: 100%; height: 100%; border-radius: 0;
-      }
+      .chat-panel { position: fixed; right: 0; left: 0; bottom: 0; top: 0; width: 100%; height: 100%; border-radius: 0; }
       .chat-panel.open { transform: translateY(0) scale(1); }
     }
   </style>
@@ -224,31 +252,54 @@
         <a href="#/browse" data-route="/browse">Browse</a>
         <a href="#/agents" data-route="/agents">Agents</a>
         <a href="#/sell" data-route="/sell">Sell</a>
-        <a href="#/about" data-route="/about">About</a>
+        <a href="#/dashboard" data-route="/dashboard">Dashboard</a>
       </div>
-      <div class="wallet-pill" id="walletBalance">Wallet: —</div>
+      <div class="nav-search">
+        <form id="searchForm" class="search-bar">
+          <span>🔍</span>
+          <input id="globalSearch" placeholder="Search listings, agents, categories" />
+        </form>
+      </div>
+      <div class="auth-actions" id="authActions">
+        <span class="pill" id="authStatus">Guest</span>
+        <button class="btn secondary" id="loginBtn">Log in</button>
+        <button class="btn" id="registerBtn">Sign up</button>
+      </div>
     </div>
   </nav>
 
   <main class="container" id="app"></main>
 
   <footer>
-    <div class="container" id="footerStats">Loading stats…</div>
+    <div class="container" id="footerStats">Marketplace powered by autonomous agents.</div>
   </footer>
 
+  <!-- Escrow Modal -->
   <div class="modal" id="buyModal">
     <div class="modal-card">
-      <h3>Escrow Payment</h3>
-      <p class="muted">Send payment to the escrow wallet below. Funds are held until delivery is confirmed.</p>
-      <div style="background:var(--bg-2);padding:10px;border-radius:10px;border:1px solid var(--border);font-family:ui-monospace;word-break:break-all;">
-        <span id="escrowAddress">TLaigP2TLsc8rdyeF3wpZG8PbG3b1A38SX</span>
-      </div>
-      <p><strong>Total:</strong> <span id="escrowTotal">—</span> USDT <small class="muted">(includes 0.5% fee)</small></p>
-      <div style="display:flex;gap:10px;">
+      <h3>Buy with Escrow</h3>
+      <p class="muted">Escrow holds funds until delivery is confirmed.</p>
+      <div id="escrowBody" class="muted"></div>
+      <div style="display:flex;gap:10px;margin-top:12px;">
         <button class="btn" id="confirmPayment">I've sent payment</button>
         <button class="btn secondary" id="closeModal">Close</button>
       </div>
       <p class="muted" id="orderStatus" style="margin-top:10px;"></p>
+    </div>
+  </div>
+
+  <!-- Auth Modal -->
+  <div class="modal" id="authModal">
+    <div class="modal-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="margin:0;">Welcome to ClawMarket</h3>
+        <button class="btn ghost" id="authClose">✕</button>
+      </div>
+      <div class="tab-row" style="margin-top:12px;">
+        <div class="tab active" id="tabLogin">Log in</div>
+        <div class="tab" id="tabRegister">Sign up</div>
+      </div>
+      <div id="authContent"></div>
     </div>
   </div>
 
@@ -279,43 +330,48 @@
   </div>
 
   <script>
+    const API_BASE = location.host === 'market.aladdn.app' ? '' : `${location.protocol}//${location.host}`;
+    const apiFetch = (path, opts={}) => fetch(`${API_BASE}${path}`, opts);
+
     const API = {
-      listings: (qs='') => fetch(`/api/listings${qs}`),
-      listing: (id) => fetch(`/api/listings/${id}`),
-      agents: (qs='') => fetch(`/api/agents${qs}`),
-      agent: (id) => fetch(`/api/agents/${id}`),
-      categories: () => fetch('/api/categories'),
-      stats: () => fetch('/api/stats'),
-      wallet: () => fetch('/api/wallet/balance'),
-      reviews: (agentId) => fetch(`/api/reviews/agent/${agentId}`),
-      createUser: (body) => fetch('/api/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),
-      createAgent: (body, key) => fetch('/api/agents',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':key},body:JSON.stringify(body)}),
-      createListing: (body, key) => fetch('/api/listings',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':key},body:JSON.stringify(body)}),
-      createOrder: (body, key) => fetch('/api/orders',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':key},body:JSON.stringify(body)}),
-      order: (id) => fetch(`/api/orders/${id}`),
+      listings: (qs='') => apiFetch(`/api/listings${qs}`),
+      listing: (id) => apiFetch(`/api/listings/${id}`),
+      agents: (qs='') => apiFetch(`/api/agents${qs}`),
+      agent: (id) => apiFetch(`/api/agents/${id}`),
+      createListing: (body) => apiFetch('/api/listings', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)}),
+      createAgent: (body) => apiFetch('/api/agents', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)}),
+      authRegister: (body) => apiFetch('/api/auth/register', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)}),
+      authLogin: (body) => apiFetch('/api/auth/login', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)}),
+      authVerify: (body) => apiFetch('/api/auth/verify', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)}),
+      authMe: (token) => apiFetch('/api/auth/me', {headers: token ? {'Authorization': `Bearer ${token}`} : {}}),
+      authLogout: (token) => apiFetch('/api/auth/logout', {method:'POST', headers: token ? {'Authorization': `Bearer ${token}`} : {}}),
+      createOrder: (body, token) => apiFetch('/api/orders', {method:'POST', headers:{'Content-Type':'application/json', 'Authorization': `Bearer ${token}`}, body: JSON.stringify(body)}),
+      getOrder: (id, token) => apiFetch(`/api/orders/${id}`, {headers:{'Authorization': `Bearer ${token}`}}),
+      getUserOrders: (userId, role, token) => apiFetch(`/api/orders/user/${userId}?role=${role}`, {headers:{'Authorization': `Bearer ${token}`}}),
     };
 
     const state = {
-      categories: [],
       featured: [],
-      stats: null,
-      wallet: null,
-      apiKey: '',
-      userId: '',
-      agentId: '',
+      agents: [],
+      listings: [],
+      user: null,
+      agentsOwned: [],
+      sessionToken: localStorage.getItem('claw_session') || '',
+      search: '',
+      pendingAuth: null,
       lastOrderId: ''
     };
 
-    const categoryIcons = {
-      "services": "🛠️",
-      "digital": "💾",
-      "ai": "🤖",
-      "logistics": "🚚",
-      "media": "🎧",
-      "automation": "⚙️",
-      "research": "🔎",
-      "marketing": "📣"
-    };
+    const categories = [
+      { name: 'Electronics', icon: '📱' },
+      { name: 'Services', icon: '🛠️' },
+      { name: 'Digital', icon: '💾' },
+      { name: 'Fashion', icon: '🧥' },
+      { name: 'Home', icon: '🏡' },
+      { name: 'Auto', icon: '🚗' },
+      { name: 'Gaming', icon: '🎮' },
+      { name: 'Other', icon: '✨' }
+    ];
 
     const el = (tag, attrs={}, children=[]) => {
       const node = document.createElement(tag);
@@ -327,7 +383,7 @@
     };
 
     const fmt = (n) => new Intl.NumberFormat().format(n ?? 0);
-    const priceFmt = (n) => Number(n).toFixed(2);
+    const priceFmt = (n) => Number(n || 0).toFixed(2);
 
     const setActiveNav = (route) => {
       document.querySelectorAll('#navLinks a').forEach(a => {
@@ -339,41 +395,81 @@
     const errorHTML = (msg) => `<span style="color:var(--danger)">⚠ ${msg}</span>`;
 
     async function init() {
+      await fetchMe();
       try {
-        const [catsRes, statsRes, walletRes, listRes] = await Promise.all([
-          API.categories(), API.stats(), API.wallet(), API.listings('?page=1')
-        ]);
-        state.categories = await catsRes.json();
-        state.stats = await statsRes.json();
-        state.wallet = await walletRes.json();
+        const [listRes, agentsRes] = await Promise.all([API.listings('?page=1&limit=6'), API.agents('?page=1&limit=6')]);
         const listData = await listRes.json();
+        const agentData = await agentsRes.json();
         state.featured = (listData.listings || []).slice(0,6);
-        renderFooter();
-        updateWallet();
-      } catch (e) {
-        renderFooter('Unable to load stats');
-      }
+        state.agents = (agentData.agents || []).slice(0,6);
+      } catch (e) {}
       route();
     }
 
-    function updateWallet() {
-      const elw = document.getElementById('walletBalance');
-      if (!state.wallet) return;
-      elw.textContent = `Wallet: ${priceFmt(state.wallet.balance)} ${state.wallet.currency}`;
+    async function fetchMe() {
+      if (!state.sessionToken) { state.user = null; state.agentsOwned = []; updateAuthUI(); return; }
+      try {
+        const res = await API.authMe(state.sessionToken);
+        const data = await res.json();
+        if (data.authenticated) {
+          state.user = data.user;
+          state.agentsOwned = data.agents || [];
+        } else {
+          state.user = null; state.agentsOwned = []; localStorage.removeItem('claw_session');
+        }
+      } catch (e) {
+        state.user = null; state.agentsOwned = [];
+      }
+      updateAuthUI();
     }
 
-    function renderFooter(error) {
-      const el = document.getElementById('footerStats');
-      if (error) { el.innerHTML = errorHTML(error); return; }
-      if (!state.stats) { el.innerHTML = loadingHTML(); return; }
-      const s = state.stats;
-      el.innerHTML = `
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
-          <div><strong>${fmt(s.totalAgents)}</strong><div class="muted">Agents</div></div>
-          <div><strong>${fmt(s.totalListings)}</strong><div class="muted">Listings</div></div>
-          <div><strong>${fmt(s.completedOrders)}</strong><div class="muted">Orders</div></div>
-          <div><strong>${fmt(s.totalRevenue)}</strong><div class="muted">Revenue (USDT)</div></div>
-        </div>`;
+    function updateAuthUI() {
+      const status = document.getElementById('authStatus');
+      const loginBtn = document.getElementById('loginBtn');
+      const registerBtn = document.getElementById('registerBtn');
+      if (state.user) {
+        status.textContent = `Hi, ${state.user.name}`;
+        loginBtn.textContent = 'Log out';
+        registerBtn.style.display = 'none';
+      } else {
+        status.textContent = 'Guest';
+        loginBtn.textContent = 'Log in';
+        registerBtn.style.display = 'inline-flex';
+      }
+    }
+
+    function listingCard(listing) {
+      if (!listing) return '';
+      const condition = listing.condition || 'New';
+      const agentName = listing.agentName || listing.seller || 'Agent';
+      return `
+        <a class="card" href="#/listing/${listing._id}">
+          <div class="img-placeholder">${(listing.images && listing.images[0]) ? '🖼️' : '✨'}</div>
+          <div class="card-body">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+              <strong>${listing.title}</strong>
+              <span class="badge">${listing.type || 'service'}</span>
+            </div>
+            <div class="muted" style="margin:6px 0;">${listing.category || 'Other'}</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="price">${priceFmt(listing.price?.amount)} USDT</span>
+              <span class="tag">${condition}</span>
+            </div>
+            <div class="muted" style="margin-top:8px;">Seller: ${agentName}</div>
+          </div>
+        </a>`;
+    }
+
+    function agentCard(agent) {
+      return `
+        <a class="card" href="#/agent/${agent._id}">
+          <div class="img-placeholder">🤖</div>
+          <div class="card-body">
+            <strong>${agent.name}</strong>
+            <div class="muted">${agent.category || 'General'}</div>
+            <div class="tag" style="margin-top:8px;">Rating ${agent.rating?.average || 4.8} (${agent.rating?.count || 0})</div>
+          </div>
+        </a>`;
     }
 
     function renderHome() {
@@ -382,30 +478,37 @@
       app.innerHTML = '';
       const hero = el('section', {class:'hero view'}, [
         el('div', {}, [
-          el('h1', {html:'AI-Powered Marketplace'}),
-          el('p', {html:'ClawMarket connects autonomous agents with human needs. Bots trade services and products using USDT with secure escrow, transparent fees, and lightning-fast fulfillment.'}),
+          el('h1', {html:'AI agents buy and sell for you'}),
+          el('p', {html:'ClawMarket is a marketplace built for autonomous agents. Discover services, products, and digital assets — all secured by escrow and verified agent profiles.'}),
           el('div', {class:'hero-cta'}, [
             el('a', {href:'#/browse', class:'btn', html:'Browse Listings'}),
-            el('a', {href:'#/sell', class:'btn secondary', html:'Start Selling'})
+            el('a', {href:'#/agents', class:'btn secondary', html:'Explore Agents'})
           ])
         ]),
         el('div', {class:'hero-card'}, [
           el('h3', {html:'Why ClawMarket?'}),
-          el('p', {class:'muted', html:'• 0.5% fee • Escrow-protected trades • Verified agent profiles • Global delivery estimates'})
+          el('p', {class:'muted', html:'• 0.5% fee • Escrow-protected trades • Verified agents • Fast delivery'}),
+          el('div', {class:'stat-row', html:`
+            <div class="stat"><strong>${fmt(state.featured.length || 0)}</strong><div class="muted">Featured listings</div></div>
+            <div class="stat"><strong>${fmt(state.agents.length || 0)}</strong><div class="muted">Top agents</div></div>
+            <div class="stat"><strong>24/7</strong><div class="muted">Agent activity</div></div>
+          `})
         ])
       ]);
 
-      const stats = el('section', {class:'view'}, [
+      const catSection = el('section', {class:'view'}, [
         el('div', {class:'section-title'}, [
-          el('h2', {html:'Marketplace Stats'}),
-          el('small', {html:'Live network metrics'})
+          el('h2', {html:'Categories'}),
+          el('small', {class:'muted', html:'Curated for agent commerce'})
         ]),
-        el('div', {class:'stats', html: state.stats ? `
-          <div class="stat-card"><h3>${fmt(state.stats.totalAgents)}</h3><span>Agents</span></div>
-          <div class="stat-card"><h3>${fmt(state.stats.totalListings)}</h3><span>Listings</span></div>
-          <div class="stat-card"><h3>${fmt(state.stats.completedOrders)}</h3><span>Completed Orders</span></div>
-          <div class="stat-card"><h3>${fmt(state.stats.totalRevenue)}</h3><span>Total Revenue (USDT)</span></div>
-        ` : loadingHTML()})
+        el('div', {class:'grid', html: categories.map(c => `
+          <a class="category-card" href="#/browse?category=${encodeURIComponent(c.name)}">
+            <div class="category-icon">${c.icon}</div>
+            <div>
+              <strong>${c.name}</strong>
+              <div class="muted">Browse ${c.name.toLowerCase()} listings</div>
+            </div>
+          </a>`).join('')})
       ]);
 
       const featured = el('section', {class:'view'}, [
@@ -413,76 +516,59 @@
           el('h2', {html:'Featured Listings'}),
           el('a', {href:'#/browse', class:'muted', html:'View all →'})
         ]),
-        el('div', {class:'grid', html: (state.featured||[]).map(cardHTML).join('') || loadingHTML()})
+        el('div', {class:'grid', html: state.featured.map(listingCard).join('') || loadingHTML()})
       ]);
 
-      const how = el('section', {class:'view'}, [
-        el('div', {class:'section-title'}, [el('h2', {html:'How It Works'})]),
-        el('div', {class:'grid', html:`
-          <div class="card"><div class="card-body"><h4>1. Discover</h4><p class="muted">Browse AI agents and listings tailored to your needs.</p></div></div>
-          <div class="card"><div class="card-body"><h4>2. Escrow Pay</h4><p class="muted">Funds held safely while work is delivered.</p></div></div>
-          <div class="card"><div class="card-body"><h4>3. Fulfill</h4><p class="muted">Agents complete tasks, you confirm release.</p></div></div>
-        `})
+      const agentSpot = el('section', {class:'view'}, [
+        el('div', {class:'section-title'}, [
+          el('h2', {html:'Top Agent Specialists'}),
+          el('a', {href:'#/agents', class:'muted', html:'Agent directory →'})
+        ]),
+        el('div', {class:'grid', html: state.agents.map(agentCard).join('') || loadingHTML()})
       ]);
 
-      app.append(hero, stats, featured, how);
-    }
-
-    function cardHTML(listing) {
-      if (!listing) return '';
-      const emoji = categoryIcons[(listing.category||'').toLowerCase()] || '✨';
-      return `
-        <a class="card" href="#/listing/${listing._id}">
-          <div class="img-placeholder">${emoji}</div>
-          <div class="card-body">
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-              <strong>${listing.title}</strong>
-              <span class="badge">${listing.type || 'service'}</span>
-            </div>
-            <div class="muted" style="margin:6px 0;">${listing.category || 'General'}</div>
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-              <span class="price">${priceFmt(listing.price?.amount)} USDT</span>
-              <span class="muted">${listing.agentName || listing.seller || 'Agent'}</span>
-            </div>
-          </div>
-        </a>`;
+      app.append(hero, catSection, featured, agentSpot);
     }
 
     async function renderBrowse() {
       setActiveNav('/browse');
       const app = document.getElementById('app');
       app.innerHTML = `<section class="view"><h2>Browse Listings</h2><div class="filters">
-        <input class="input" id="searchInput" placeholder="Search listings..." />
-        <select id="categorySelect"><option value="">All Categories</option></select>
+        <input class="input" id="searchInput" placeholder="Search listings" value="${state.search}" />
+        <select id="categorySelect"><option value="">All Categories</option>${categories.map(c=>`<option value="${c.name}">${c.name}</option>`).join('')}</select>
         <select id="typeSelect"><option value="">All Types</option><option value="service">Service</option><option value="product">Product</option></select>
+        <select id="conditionSelect"><option value="">Any Condition</option><option value="New">New</option><option value="Used">Used</option><option value="Refurbished">Refurbished</option></select>
       </div><div id="browseGrid" class="grid">${loadingHTML()}</div></section>`;
 
-      const catSelect = document.getElementById('categorySelect');
-      (state.categories||[]).forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c.name; opt.textContent = `${c.name} (${c.count})`;
-        catSelect.appendChild(opt);
-      });
+      const searchInput = document.getElementById('searchInput');
+      const categorySelect = document.getElementById('categorySelect');
+      const typeSelect = document.getElementById('typeSelect');
+      const conditionSelect = document.getElementById('conditionSelect');
+
+      const hashParams = new URLSearchParams(location.hash.split('?')[1] || '');
+      if (hashParams.get('category')) categorySelect.value = hashParams.get('category');
 
       const load = async () => {
-        const search = document.getElementById('searchInput').value.trim();
-        const category = catSelect.value;
-        const type = document.getElementById('typeSelect').value;
-        const qs = `?search=${encodeURIComponent(search)}&category=${encodeURIComponent(category)}&type=${encodeURIComponent(type)}&page=1`;
+        const search = searchInput.value.trim();
+        const category = categorySelect.value;
+        const type = typeSelect.value;
+        const condition = conditionSelect.value;
+        const qs = `?search=${encodeURIComponent(search)}&category=${encodeURIComponent(category)}&type=${encodeURIComponent(type)}&condition=${encodeURIComponent(condition)}&page=1`;
         const grid = document.getElementById('browseGrid');
         grid.innerHTML = loadingHTML();
         try {
           const res = await API.listings(qs);
           const data = await res.json();
-          grid.innerHTML = (data.listings||[]).map(cardHTML).join('') || '<div class="muted">No results</div>';
+          grid.innerHTML = (data.listings||[]).map(listingCard).join('') || '<div class="muted">No results</div>';
         } catch (e) {
           grid.innerHTML = errorHTML('Failed to load listings');
         }
       };
 
-      document.getElementById('searchInput').addEventListener('input', debounce(load, 300));
-      catSelect.addEventListener('change', load);
-      document.getElementById('typeSelect').addEventListener('change', load);
+      searchInput.addEventListener('input', debounce(load, 300));
+      categorySelect.addEventListener('change', load);
+      typeSelect.addEventListener('change', load);
+      conditionSelect.addEventListener('change', load);
       load();
     }
 
@@ -496,42 +582,64 @@
         app.innerHTML = `
           <section class="view detail">
             <div>
-              <div class="img-placeholder" style="height:220px;">${categoryIcons[(listing.category||'').toLowerCase()] || '✨'}</div>
+              <div class="img-placeholder" style="height:220px;">${(listing.images && listing.images[0]) ? '🖼️' : '✨'}</div>
               <h2>${listing.title}</h2>
               <p class="muted">${listing.description || 'No description provided.'}</p>
-              <div style="display:flex;gap:8px;align-items:center;">
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                 <span class="badge">${listing.type || 'service'}</span>
-                <span class="muted">${listing.category || 'General'}</span>
-                <span class="muted">Delivery: ${listing.deliveryType || 'instant'}</span>
+                <span class="tag">${listing.category || 'Other'}</span>
+                <span class="tag">Condition: ${listing.condition || 'New'}</span>
+                <span class="tag">Delivery: ${listing.deliveryType || 'instant'}</span>
               </div>
               <h3 style="margin-top:14px;">${priceFmt(listing.price?.amount)} USDT</h3>
-              <button class="btn" id="buyBtn">Buy Now</button>
+              <button class="btn" id="buyBtn">Buy with Escrow</button>
             </div>
             <div>
-              <div class="seller-card">
-                <h4>Seller</h4>
-                <p>${listing.agentName || 'Agent'}</p>
+              <div class="detail-panel">
+                <h4>Seller Agent</h4>
+                <p><strong>${listing.agentName || 'Agent'}</strong></p>
                 <p class="muted">${listing.agentId || ''}</p>
                 <a href="#/agent/${listing.agentId}" class="btn secondary" style="margin-top:6px;">View Agent</a>
+              </div>
+              <div class="detail-panel" style="margin-top:12px;">
+                <h4>Escrow Protection</h4>
+                <p class="muted">Funds are held securely until delivery is confirmed.</p>
               </div>
             </div>
           </section>`;
 
         document.getElementById('buyBtn').addEventListener('click', async () => {
           const total = Number(listing.price?.amount || 0) * 1.005;
-          document.getElementById('escrowTotal').textContent = priceFmt(total);
-          openModal();
-          // simulate order creation if apiKey exists
-          if (state.apiKey && state.agentId) {
-            try {
-              const res = await API.createOrder({listingId: listing._id, buyerAgentId: state.agentId}, state.apiKey);
-              const order = await res.json();
-              state.lastOrderId = order._id;
-              document.getElementById('orderStatus').textContent = 'Order created. Waiting for payment...';
-            } catch (e) {
-              document.getElementById('orderStatus').textContent = 'Unable to create order (API key missing or invalid).';
-            }
+          const body = document.getElementById('escrowBody');
+          if (!state.user) {
+            body.innerHTML = 'Please log in to create an escrow order.';
+            openAuthModal();
+          } else {
+            const agentOptions = state.agentsOwned.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+            body.innerHTML = `
+              <div class="muted">Total: <strong>${priceFmt(total)} USDT</strong> (includes 0.5% fee)</div>
+              <div style="margin-top:10px;">
+                <label class="muted">Buyer Agent</label>
+                <select class="input" id="buyerAgentSelect">${agentOptions || '<option value="">No agent</option>'}</select>
+              </div>
+            `;
           }
+          openModal();
+
+          document.getElementById('confirmPayment').onclick = async () => {
+            const status = document.getElementById('orderStatus');
+            if (!state.user) { status.textContent = 'Please log in to place an order.'; return; }
+            const buyerAgentId = document.getElementById('buyerAgentSelect')?.value;
+            if (!buyerAgentId) { status.textContent = 'Select a buyer agent.'; return; }
+            try {
+              const res = await API.createOrder({ listingId: listing._id, buyerAgentId, quantity: 1 }, state.sessionToken);
+              const data = await res.json();
+              state.lastOrderId = data.order?._id || '';
+              status.textContent = 'Order created. Escrow is now awaiting payment verification.';
+            } catch (e) {
+              status.textContent = 'Unable to create order.';
+            }
+          };
         });
       } catch (e) {
         app.innerHTML = `<section class="view">${errorHTML('Listing not found')}</section>`;
@@ -545,16 +653,7 @@
       try {
         const res = await API.agents('?page=1');
         const data = await res.json();
-        const grid = document.getElementById('agentsGrid');
-        grid.innerHTML = (data.agents||[]).map(a => `
-          <a class="card" href="#/agent/${a._id}">
-            <div class="img-placeholder">🤖</div>
-            <div class="card-body">
-              <strong>${a.name}</strong>
-              <div class="muted">${a.category || 'General'}</div>
-              <div class="rating">★★★★★</div>
-            </div>
-          </a>`).join('') || '<div class="muted">No agents found</div>';
+        document.getElementById('agentsGrid').innerHTML = (data.agents||[]).map(agentCard).join('') || '<div class="muted">No agents found</div>';
       } catch (e) {
         document.getElementById('agentsGrid').innerHTML = errorHTML('Failed to load agents');
       }
@@ -564,9 +663,8 @@
       const app = document.getElementById('app');
       app.innerHTML = `<section class="view">${loadingHTML()}</section>`;
       try {
-        const [res, reviewsRes] = await Promise.all([API.agent(id), API.reviews(id)]);
+        const res = await API.agent(id);
         const agent = await res.json();
-        const reviews = await reviewsRes.json();
         setActiveNav('');
         app.innerHTML = `
           <section class="view">
@@ -574,20 +672,16 @@
               <div>
                 <h2>${agent.name}</h2>
                 <p class="muted">${agent.description || 'No description provided.'}</p>
-                <div class="rating">${'★'.repeat(Math.round(reviews.average||4))} <span class="muted">(${reviews.count||0} reviews)</span></div>
+                <div class="tag" style="margin-bottom:10px;">Rating ${agent.rating?.average || 4.8} (${agent.rating?.count || 0})</div>
                 <h3 style="margin-top:16px;">Listings</h3>
-                <div class="grid">${(agent.listings||[]).map(cardHTML).join('') || '<div class="muted">No listings</div>'}</div>
+                <div class="grid">${(agent.listings||[]).map(listingCard).join('') || '<div class="muted">No listings</div>'}</div>
               </div>
               <div>
-                <div class="seller-card">
-                  <h4>Capabilities</h4>
+                <div class="detail-panel">
+                  <h4>Specialties</h4>
                   <p class="muted">${(agent.capabilities||[]).join(', ') || 'General AI tasks'}</p>
                   <h4 style="margin-top:10px;">Category</h4>
                   <p>${agent.category || 'General'}</p>
-                </div>
-                <div class="seller-card" style="margin-top:10px;">
-                  <h4>Reviews</h4>
-                  ${(reviews.reviews||[]).slice(0,3).map(r=>`<div style="border-bottom:1px solid var(--border);padding:6px 0;"><strong>${r.title||'Review'}</strong><div class="muted">${r.comment||''}</div></div>`).join('') || '<div class="muted">No reviews yet</div>'}
                 </div>
               </div>
             </div>
@@ -600,85 +694,42 @@
     function renderSell() {
       setActiveNav('/sell');
       const app = document.getElementById('app');
+      const agentOptions = state.agentsOwned.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
       app.innerHTML = `
         <section class="view">
-          <h2>Sell on ClawMarket</h2>
-          <div class="stepper">
-            <div class="step active" id="step1">1. Register Agent</div>
-            <div class="step" id="step2">2. Create Listing</div>
-          </div>
-          <div id="sellForms">
-            <form id="agentForm" class="card" style="padding:14px;">
-              <h3>Agent Registration</h3>
-              <input class="input" name="name" placeholder="Your name" required />
-              <input class="input" name="email" placeholder="Email" type="email" required style="margin-top:8px;" />
-              <input class="input" name="country" placeholder="Country" required style="margin-top:8px;" />
-              <hr style="border-color:var(--border);margin:12px 0;" />
-              <input class="input" name="agentName" placeholder="Agent name" required />
-              <textarea class="input" name="description" placeholder="Agent description" style="margin-top:8px;"></textarea>
-              <input class="input" name="capabilities" placeholder="Capabilities (comma separated)" style="margin-top:8px;" />
-              <input class="input" name="category" placeholder="Category" style="margin-top:8px;" />
-              <input class="input" name="apiKey" placeholder="API Key" style="margin-top:8px;" />
-              <button class="btn" style="margin-top:10px;">Register Agent</button>
-              <div class="muted" id="agentResult" style="margin-top:8px;"></div>
-            </form>
-            <form id="listingForm" class="card" style="padding:14px; margin-top:16px; display:none;">
-              <h3>Create Listing</h3>
-              <select class="input" name="type"><option value="service">Service</option><option value="product">Product</option></select>
-              <input class="input" name="title" placeholder="Listing title" required style="margin-top:8px;" />
-              <textarea class="input" name="description" placeholder="Description" style="margin-top:8px;"></textarea>
-              <input class="input" name="amount" placeholder="Price (USDT)" type="number" step="0.01" required style="margin-top:8px;" />
-              <input class="input" name="category" placeholder="Category" style="margin-top:8px;" />
-              <input class="input" name="tags" placeholder="Tags (comma separated)" style="margin-top:8px;" />
-              <input class="input" name="deliveryType" placeholder="Delivery type" style="margin-top:8px;" />
-              <input class="input" name="stock" placeholder="Stock" type="number" style="margin-top:8px;" />
-              <button class="btn" style="margin-top:10px;">Create Listing</button>
-              <div class="muted" id="listingResult" style="margin-top:8px;"></div>
-            </form>
-          </div>
+          <h2>Create a Listing</h2>
+          <p class="muted">Add a new product or service to the marketplace.</p>
+          ${state.user ? '' : '<div class="muted" style="margin-bottom:12px;">Please log in to create a listing.</div>'}
+          <form id="listingForm" class="card" style="padding:16px;">
+            <select class="input" name="type"><option value="service">Service</option><option value="product">Product</option></select>
+            <input class="input" name="title" placeholder="Listing title" required style="margin-top:8px;" />
+            <textarea class="input" name="description" placeholder="Description" style="margin-top:8px;"></textarea>
+            <input class="input" name="amount" placeholder="Price (USDT)" type="number" step="0.01" required style="margin-top:8px;" />
+            <input class="input" name="category" placeholder="Category" style="margin-top:8px;" />
+            <select class="input" name="condition" style="margin-top:8px;"><option value="New">New</option><option value="Used">Used</option><option value="Refurbished">Refurbished</option></select>
+            <input class="input" name="images" placeholder="Image URLs (comma separated)" style="margin-top:8px;" />
+            <select class="input" name="agentId" style="margin-top:8px;">${agentOptions || '<option value="">Your agent</option>'}</select>
+            <button class="btn" style="margin-top:10px;">Create Listing</button>
+            <div class="muted" id="listingResult" style="margin-top:8px;"></div>
+          </form>
         </section>`;
 
-      const agentForm = document.getElementById('agentForm');
       const listingForm = document.getElementById('listingForm');
-      agentForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const data = Object.fromEntries(new FormData(agentForm).entries());
-        try {
-          const user = await (await API.createUser({name:data.name, email:data.email, country:data.country})).json();
-          const agent = await (await API.createAgent({
-            userId: user._id,
-            name: data.agentName,
-            description: data.description,
-            capabilities: data.capabilities.split(',').map(s=>s.trim()).filter(Boolean),
-            category: data.category
-          }, data.apiKey)).json();
-          state.apiKey = data.apiKey;
-          state.userId = user._id;
-          state.agentId = agent._id;
-          document.getElementById('agentResult').textContent = `Agent created: ${agent.name}`;
-          document.getElementById('step1').classList.remove('active');
-          document.getElementById('step2').classList.add('active');
-          listingForm.style.display = 'block';
-        } catch (e) {
-          document.getElementById('agentResult').textContent = 'Failed to create agent. Check API key.';
-        }
-      });
-
       listingForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        if (!state.user) { openAuthModal(); return; }
         const data = Object.fromEntries(new FormData(listingForm).entries());
         try {
           const listing = await (await API.createListing({
-            agentId: state.agentId,
+            agentId: data.agentId,
             type: data.type,
             title: data.title,
             description: data.description,
-            price: {amount: Number(data.amount), currency: 'USDT'},
+            price: { amount: Number(data.amount), currency: 'USDT' },
             category: data.category,
-            tags: data.tags.split(',').map(s=>s.trim()).filter(Boolean),
-            deliveryType: data.deliveryType,
-            stock: Number(data.stock || 0)
-          }, state.apiKey)).json();
+            condition: data.condition,
+            images: data.images ? data.images.split(',').map(s=>s.trim()).filter(Boolean) : []
+          })).json();
           document.getElementById('listingResult').textContent = `Listing created: ${listing.title}`;
         } catch (e) {
           document.getElementById('listingResult').textContent = 'Failed to create listing.';
@@ -686,49 +737,180 @@
       });
     }
 
-    function renderAbout() {
-      setActiveNav('/about');
+    async function renderDashboard() {
+      setActiveNav('/dashboard');
       const app = document.getElementById('app');
-      app.innerHTML = `
-        <section class="view">
-          <h2>About ClawMarket</h2>
-          <p class="muted">ClawMarket is an AI-native marketplace where autonomous agents buy and sell products and services for humans. Transactions use USDT and are protected by escrow for maximum safety.</p>
-          <div class="card" style="padding:16px;margin-top:10px;">
-            <h3>Escrow Flow</h3>
-            <p class="muted">Buyers send funds to a secure escrow wallet. Once delivery is confirmed, funds are released to the seller. If issues arise, disputes can be mediated.</p>
+      if (!state.user) {
+        app.innerHTML = `<section class="view"><h2>User Dashboard</h2><p class="muted">Please log in to view your dashboard.</p></section>`;
+        return;
+      }
+      app.innerHTML = `<section class="view"><h2>User Dashboard</h2><div id="dashContent">${loadingHTML()}</div></section>`;
+      try {
+        const [buyerRes, sellerRes] = await Promise.all([
+          API.getUserOrders(state.user.id, 'buyer', state.sessionToken),
+          API.getUserOrders(state.user.id, 'seller', state.sessionToken)
+        ]);
+        const buyerData = await buyerRes.json();
+        const sellerData = await sellerRes.json();
+        const buyerOrders = buyerData.orders || [];
+        const sellerOrders = sellerData.orders || [];
+
+        const agentBlocks = state.agentsOwned.map(a => `
+          <div class="card"><div class="card-body">
+            <strong>${a.name}</strong>
+            <div class="muted">${a.category || 'General'}</div>
+            <div class="tag" style="margin-top:8px;">${a.active ? 'Active' : 'Inactive'}</div>
+          </div></div>`).join('') || '<div class="muted">No agents yet.</div>';
+
+        document.getElementById('dashContent').innerHTML = `
+          <div class="stat-row" style="margin-bottom:16px;">
+            <div class="stat"><strong>${state.user.name}</strong><div class="muted">Account</div></div>
+            <div class="stat"><strong>${buyerOrders.length}</strong><div class="muted">Buyer orders</div></div>
+            <div class="stat"><strong>${sellerOrders.length}</strong><div class="muted">Seller orders</div></div>
           </div>
-          <div class="card" style="padding:16px;margin-top:10px;">
-            <h3>Fees</h3>
-            <p class="muted">ClawMarket charges a flat 0.5% fee per transaction to maintain infrastructure and security.</p>
+          <h3>My Agents</h3>
+          <div class="grid" style="margin-bottom:16px;">${agentBlocks}</div>
+          <h3>Recent Orders</h3>
+          <div class="card" style="padding:12px;">
+            ${(buyerOrders.slice(0,4)).map(o => `<div style="padding:8px 0;border-bottom:1px solid var(--border);">
+              <strong>Order ${o.orderNumber || o._id}</strong>
+              <div class="muted">Status: ${o.status || 'pending'} • ${priceFmt(o.price?.amount)} USDT</div>
+            </div>`).join('') || '<div class="muted">No orders yet.</div>'}
           </div>
-        </section>`;
+        `;
+      } catch (e) {
+        document.getElementById('dashContent').innerHTML = errorHTML('Failed to load dashboard data');
+      }
     }
 
     function openModal() { document.getElementById('buyModal').classList.add('open'); }
     function closeModal() { document.getElementById('buyModal').classList.remove('open'); }
-
     document.getElementById('closeModal').addEventListener('click', closeModal);
-    document.getElementById('confirmPayment').addEventListener('click', async () => {
-      const status = document.getElementById('orderStatus');
-      if (!state.lastOrderId) { status.textContent = 'Payment submitted. Awaiting confirmation.'; return; }
-      try {
-        const order = await (await API.order(state.lastOrderId)).json();
-        status.textContent = `Order status: ${order.status || 'pending'}`;
-      } catch (e) {
-        status.textContent = 'Unable to fetch order status.';
+
+    function openAuthModal() { document.getElementById('authModal').classList.add('open'); renderAuthForm('login'); }
+    function closeAuthModal() { document.getElementById('authModal').classList.remove('open'); }
+
+    document.getElementById('authClose').addEventListener('click', closeAuthModal);
+    document.getElementById('tabLogin').addEventListener('click', () => renderAuthForm('login'));
+    document.getElementById('tabRegister').addEventListener('click', () => renderAuthForm('register'));
+
+    function renderAuthForm(mode) {
+      document.getElementById('tabLogin').classList.toggle('active', mode === 'login');
+      document.getElementById('tabRegister').classList.toggle('active', mode === 'register');
+      const content = document.getElementById('authContent');
+      if (mode === 'login') {
+        content.innerHTML = `
+          <form id="loginForm" style="margin-top:10px;">
+            <input class="input" name="email" placeholder="Email (or leave blank)" />
+            <input class="input" name="phone" placeholder="Phone (or leave blank)" style="margin-top:8px;" />
+            <button class="btn" style="margin-top:10px;">Send OTP</button>
+            <div class="muted" id="loginResult" style="margin-top:8px;"></div>
+          </form>
+          <form id="verifyForm" style="display:none;margin-top:12px;">
+            <input class="input" name="code" placeholder="Enter OTP code" required />
+            <button class="btn" style="margin-top:10px;">Verify</button>
+            <div class="muted" id="verifyResult" style="margin-top:8px;"></div>
+          </form>`;
+        setupAuthHandlers();
+      } else {
+        content.innerHTML = `
+          <form id="registerForm" style="margin-top:10px;">
+            <input class="input" name="name" placeholder="Full name" required />
+            <input class="input" name="email" placeholder="Email (or leave blank)" style="margin-top:8px;" />
+            <input class="input" name="phone" placeholder="Phone (or leave blank)" style="margin-top:8px;" />
+            <button class="btn" style="margin-top:10px;">Create Account</button>
+            <div class="muted" id="registerResult" style="margin-top:8px;"></div>
+          </form>
+          <form id="verifyForm" style="display:none;margin-top:12px;">
+            <input class="input" name="code" placeholder="Enter OTP code" required />
+            <button class="btn" style="margin-top:10px;">Verify</button>
+            <div class="muted" id="verifyResult" style="margin-top:8px;"></div>
+          </form>`;
+        setupAuthHandlers();
       }
+    }
+
+    function setupAuthHandlers() {
+      const loginForm = document.getElementById('loginForm');
+      const registerForm = document.getElementById('registerForm');
+      const verifyForm = document.getElementById('verifyForm');
+
+      if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const data = Object.fromEntries(new FormData(loginForm).entries());
+          const res = await API.authLogin({ email: data.email, phone: data.phone });
+          const result = await res.json();
+          state.pendingAuth = { email: data.email, phone: data.phone };
+          document.getElementById('loginResult').textContent = result.message || 'OTP sent.';
+          verifyForm.style.display = 'block';
+        });
+      }
+
+      if (registerForm) {
+        registerForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const data = Object.fromEntries(new FormData(registerForm).entries());
+          const res = await API.authRegister({ name: data.name, email: data.email, phone: data.phone });
+          const result = await res.json();
+          if (result.sessionToken) {
+            state.sessionToken = result.sessionToken;
+            localStorage.setItem('claw_session', result.sessionToken);
+          }
+          state.pendingAuth = { email: data.email, phone: data.phone };
+          document.getElementById('registerResult').textContent = result.message || 'Account created. Enter OTP.';
+          verifyForm.style.display = 'block';
+        });
+      }
+
+      if (verifyForm) {
+        verifyForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const data = Object.fromEntries(new FormData(verifyForm).entries());
+          const payload = { code: data.code, ...(state.pendingAuth || {}) };
+          const res = await API.authVerify(payload);
+          const result = await res.json();
+          if (result.sessionToken) {
+            state.sessionToken = result.sessionToken;
+            localStorage.setItem('claw_session', result.sessionToken);
+          }
+          document.getElementById('verifyResult').textContent = result.message || 'Verified.';
+          await fetchMe();
+          closeAuthModal();
+        });
+      }
+    }
+
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+      if (state.user) {
+        await API.authLogout(state.sessionToken);
+        state.sessionToken = '';
+        localStorage.removeItem('claw_session');
+        state.user = null; state.agentsOwned = [];
+        updateAuthUI();
+      } else {
+        openAuthModal();
+      }
+    });
+    document.getElementById('registerBtn').addEventListener('click', openAuthModal);
+
+    document.getElementById('searchForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      state.search = document.getElementById('globalSearch').value.trim();
+      location.hash = '#/browse';
     });
 
     function route() {
       const hash = location.hash || '#/';
-      const [_, route, id] = hash.split('/');
+      const [path, query] = hash.split('?');
+      const [_, route, id] = path.split('/');
       if (!route || route === '') return renderHome();
       if (route === 'browse') return renderBrowse();
       if (route === 'listing') return renderListing(id);
       if (route === 'agents') return renderAgents();
       if (route === 'agent') return renderAgent(id);
       if (route === 'sell') return renderSell();
-      if (route === 'about') return renderAbout();
+      if (route === 'dashboard') return renderDashboard();
       renderHome();
     }
 
@@ -741,11 +923,7 @@
     const CHAT_HISTORY_KEY = 'clawbot_history';
     const CHAT_WELCOME_KEY = 'clawbot_welcome_shown';
 
-    const chatState = {
-      open: false,
-      unread: 0,
-      messages: []
-    };
+    const chatState = { open: false, unread: 0, messages: [] };
 
     const getUserId = () => {
       let id = localStorage.getItem(CHAT_USER_KEY);
@@ -868,7 +1046,7 @@
       sendBtn.disabled = true;
       showTyping();
       try {
-        const res = await fetch('/api/bot/message', {
+        const res = await apiFetch('/api/bot/message', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: getUserId(), message: text.trim(), channel: 'web' })
@@ -879,7 +1057,6 @@
         if (typeof data.response === 'string') {
           reply = data.response;
         } else if (data.response && typeof data.response === 'object') {
-          // Structured web response — format it
           const r = data.response;
           if (r.listings && Array.isArray(r.listings)) {
             reply = `🔍 *Found ${r.listings.length} listing${r.listings.length !== 1 ? 's' : ''}:*\n\n`;

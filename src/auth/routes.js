@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const { ObjectId } = require('mongodb');
 const { getCollection } = require('../shared/db');
 const { logAudit } = require('../shared/audit');
+const { sendOTP } = require('../shared/email');
 const { 
   generateSessionToken, 
   generateOTP, 
@@ -12,6 +13,17 @@ const {
 } = require('../shared/auth');
 
 const router = express.Router();
+
+const OTP_RATE_LIMIT = 5; // per destination per hour
+async function isOTPRateLimited(destination) {
+  if (!destination) return false;
+  const since = new Date(Date.now() - 60 * 60 * 1000);
+  const count = await getCollection('otps').countDocuments({
+    destination,
+    createdAt: { $gte: since }
+  });
+  return count >= OTP_RATE_LIMIT;
+}
 
 // ─── Register ───────────────────────────────────────────────
 // Simple registration: name + (email OR phone) — no password needed
@@ -29,6 +41,14 @@ router.post('/api/auth/register', async (req, res) => {
     // Normalize
     const normalizedEmail = email?.toLowerCase().trim();
     const normalizedPhone = phone?.replace(/\D/g, '');
+    const destination = normalizedEmail || normalizedPhone;
+
+    if (await isOTPRateLimited(destination)) {
+      return res.status(429).json({
+        error: 'Too many OTP requests. Please wait and try again later.',
+        code: 'OTP_RATE_LIMIT'
+      });
+    }
 
     // Check for existing user
     const existing = await getCollection('users').findOne({
@@ -46,10 +66,16 @@ router.post('/api/auth/register', async (req, res) => {
         code: crypto.createHash('sha256').update(otp).digest('hex'),
         type: 'login',
         channel: normalizedEmail ? 'email' : 'phone',
-        destination: normalizedEmail || normalizedPhone,
+        destination,
         expiresAt: new Date(Date.now() + 10 * 60 * 1000),
         createdAt: new Date()
       });
+
+      if (normalizedEmail) {
+        await sendOTP(normalizedEmail, otp);
+      } else {
+        console.log('[OTP] Phone delivery not configured. Destination:', destination);
+      }
 
       return res.status(200).json({ 
         success: true,
@@ -80,7 +106,8 @@ router.post('/api/auth/register', async (req, res) => {
         used: false 
       })),
       twoFactorChannels: [], // ['email', 'whatsapp', 'telegram']
-      lastLogin: null
+      lastLogin: null,
+      notificationPrefs: { email: true, push: false }
     };
 
     const result = await getCollection('users').insertOne(user);
@@ -112,10 +139,16 @@ router.post('/api/auth/register', async (req, res) => {
       code: crypto.createHash('sha256').update(otp).digest('hex'),
       type: 'verification',
       channel: normalizedEmail ? 'email' : 'phone',
-      destination: normalizedEmail || normalizedPhone,
+      destination,
       expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 min
       createdAt: new Date()
     });
+
+    if (normalizedEmail) {
+      await sendOTP(normalizedEmail, otp);
+    } else {
+      console.log('[OTP] Phone delivery not configured. Destination:', destination);
+    }
 
     // Create session immediately (unverified users can browse)
     const sessionToken = generateSessionToken();
@@ -165,6 +198,14 @@ router.post('/api/auth/login', async (req, res) => {
 
     const normalizedEmail = email?.toLowerCase().trim();
     const normalizedPhone = phone?.replace(/\D/g, '');
+    const destination = normalizedEmail || normalizedPhone;
+
+    if (await isOTPRateLimited(destination)) {
+      return res.status(429).json({
+        error: 'Too many OTP requests. Please wait and try again later.',
+        code: 'OTP_RATE_LIMIT'
+      });
+    }
 
     const user = await getCollection('users').findOne({
       $or: [
@@ -182,10 +223,16 @@ router.post('/api/auth/login', async (req, res) => {
         code: crypto.createHash('sha256').update(otp).digest('hex'),
         type: 'login',
         channel: normalizedEmail ? 'email' : 'phone',
-        destination: normalizedEmail || normalizedPhone,
+        destination,
         expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 min
         createdAt: new Date()
       });
+
+      if (normalizedEmail) {
+        await sendOTP(normalizedEmail, otp);
+      } else {
+        console.log('[OTP] Phone delivery not configured. Destination:', destination);
+      }
     }
 
     res.json({

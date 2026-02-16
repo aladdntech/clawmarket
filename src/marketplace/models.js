@@ -20,6 +20,7 @@ async function createUser(data) {
     ...clean,
     createdAt: new Date(),
     updatedAt: new Date(),
+    notificationPrefs: { email: true, push: false }
   };
   const result = await getCollection('users').insertOne(doc);
   const user = { ...doc, _id: result.insertedId };

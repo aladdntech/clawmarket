@@ -1,14 +1,21 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
-const rateLimit = require('express-rate-limit');
 const path = require('path');
 const config = require('./src/shared/config');
 const { connect } = require('./src/shared/db');
-const { authMiddleware } = require('./src/shared/auth');
+const { authMiddleware, resolveUser } = require('./src/shared/auth');
 const { errorHandler } = require('./src/shared/errors');
+const {
+  corsMiddleware,
+  requestIdMiddleware,
+  enforceJsonContentType,
+  sanitizeRequest,
+  botApiKeyMiddleware,
+  createRateLimiter
+} = require('./src/shared/security');
+const { registerChannelRoutes } = require('./src/channels');
 
 // ─── Global Process Hardening ───────────────────────────────
 // Never crash on unhandled errors — log them and keep running
@@ -24,8 +31,10 @@ const app = express();
 
 // ─── Security & Middleware ──────────────────────────────────
 app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors());
+app.use(requestIdMiddleware);
+app.use(corsMiddleware);
 app.use(cookieParser());
+app.use(enforceJsonContentType);
 
 // Safe JSON parsing — catch malformed bodies
 app.use((req, res, next) => {
@@ -38,22 +47,77 @@ app.use((req, res, next) => {
   });
 });
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+app.use(sanitizeRequest);
 
 // Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 min
-  max: 1000,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Too many requests', code: 'RATE_LIMIT' }
+const globalLimiter = createRateLimiter({
+  name: 'global',
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  keyGenerator: (req) => req.ip
 });
-app.use('/api/', limiter);
+app.use('/api/', globalLimiter);
+
+const authLimiter = createRateLimiter({
+  name: 'auth',
+  windowMs: 60 * 1000,
+  max: 5,
+  keyGenerator: (req) => req.ip
+});
+app.use('/api/auth', authLimiter);
+
+const botMessageLimiter = createRateLimiter({
+  name: 'bot-message',
+  windowMs: 60 * 1000,
+  max: 30,
+  keyGenerator: (req) => req.body?.sessionId || req.body?.userId || req.query?.sessionId || req.params?.id || req.ip
+});
+app.use('/api/bot/message', botMessageLimiter);
+
+const listingsLimiter = createRateLimiter({
+  name: 'listings-crud',
+  windowMs: 60 * 1000,
+  max: 20,
+  keyGenerator: (req) => req.userId || req.sessionToken || req.apiKey || req.ip
+});
+app.use('/api/listings', (req, res, next) => {
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+    return listingsLimiter(req, res, next);
+  }
+  next();
+});
+
+const searchLimiter = createRateLimiter({
+  name: 'search',
+  windowMs: 60 * 1000,
+  max: 60,
+  keyGenerator: (req) => req.ip
+});
+const searchGate = (req, res, next) => {
+  if (req.method === 'GET' && req.query?.search) {
+    return searchLimiter(req, res, next);
+  }
+  next();
+};
+app.use('/api/listings', searchGate);
+app.use('/api/agents', searchGate);
 
 // Static files (web UI)
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Public webhook channels (Telegram/WhatsApp)
+try {
+  registerChannelRoutes(app);
+  console.log('✅ Channel webhooks loaded');
+} catch (err) {
+  console.warn('⚠️  Channel webhooks not ready:', err.message);
+}
+
+// Bot webhook API key (optional)
+app.use('/api/bot', botApiKeyMiddleware);
+
 // Auth middleware for API routes
-app.use('/api/', authMiddleware);
+app.use('/api/', authMiddleware, resolveUser);
 
 // ─── Health Check ───────────────────────────────────────────
 app.get('/health', (req, res) => {
@@ -106,6 +170,14 @@ function loadRoutes() {
     console.log('✅ Trust routes loaded');
   } catch (err) {
     console.warn('⚠️  Trust routes not ready:', err.message);
+  }
+
+  try {
+    const adminRoutes = require('./src/admin/routes');
+    app.use('/api/admin', adminRoutes);
+    console.log('✅ Admin routes loaded');
+  } catch (err) {
+    console.warn('⚠️  Admin routes not ready:', err.message);
   }
 
   // ─── Error Handler (AFTER all routes) ───────────────────
