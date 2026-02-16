@@ -65,11 +65,38 @@ function buildTools(userId) {
         }
 
         const limit = Math.min(params.limit || 5, 10);
-        const listings = await getCollection('listings')
+        let listings = await getCollection('listings')
           .find(filter)
           .limit(limit)
-          .sort({ createdAt: -1 })
+          .sort(params.query ? { score: { $meta: 'textScore' } } : { createdAt: -1 })
           .toArray();
+
+        // Fallback: if text search returned nothing, try without $text but sort by price
+        if (listings.length === 0 && params.query) {
+          delete filter.$text;
+          // Try regex on title/description instead
+          filter.$or = [
+            { title: { $regex: params.query.split(/\s+/).join('|'), $options: 'i' } },
+            { description: { $regex: params.query.split(/\s+/).join('|'), $options: 'i' } }
+          ];
+          listings = await getCollection('listings')
+            .find(filter)
+            .limit(limit)
+            .sort({ 'price.amount': 1 })
+            .toArray();
+        }
+
+        // If still nothing and we have price filters, just return cheapest available
+        if (listings.length === 0 && (params.minPrice !== undefined || params.maxPrice !== undefined)) {
+          const priceFilter = { available: true };
+          if (params.minPrice) priceFilter['price.amount'] = { $gte: params.minPrice };
+          if (params.maxPrice) priceFilter['price.amount'] = { ...priceFilter['price.amount'], $lte: params.maxPrice };
+          listings = await getCollection('listings')
+            .find(priceFilter)
+            .limit(limit)
+            .sort({ 'price.amount': 1 })
+            .toArray();
+        }
 
         return { listings, count: listings.length };
       }
