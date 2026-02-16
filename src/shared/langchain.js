@@ -14,33 +14,62 @@ function getCopilotToken() {
     }
     return data.token;
   } catch (err) {
-    console.error('Failed to read Copilot token:', err.message);
+    // Token file not available (e.g. on Vultr) — fall through
     return null;
   }
 }
 
 /**
- * Call LLM with structured prompt — returns parsed JSON or text
+ * Get GitHub token for Models API (from GH_TOKEN env or gh CLI)
+ */
+function getGitHubToken() {
+  if (process.env.GH_TOKEN) return process.env.GH_TOKEN;
+  if (process.env.GITHUB_TOKEN) return process.env.GITHUB_TOKEN;
+  try {
+    const { execSync } = require('child_process');
+    return execSync('gh auth token 2>/dev/null', { encoding: 'utf8' }).trim();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Call LLM with automatic provider selection:
+ * 1. Copilot API (if token available — local dev with OpenClaw)
+ * 2. GitHub Models API (if GH_TOKEN available — Vultr/production)
+ * 3. Throws error if neither available
  */
 async function callLLM(messages, options = {}) {
   const {
-    model = config.llm.copilot.model,
     maxTokens = 2000,
     temperature = 0.1,
     jsonMode = false
   } = options;
 
-  const token = getCopilotToken();
-  if (!token) {
-    throw new Error('No valid LLM token available');
+  // Try Copilot first (best models)
+  const copilotToken = getCopilotToken();
+  if (copilotToken) {
+    const model = options.model || config.llm.copilot.model;
+    return _callCopilot(copilotToken, model, messages, { maxTokens, temperature, jsonMode });
   }
 
+  // Fallback to GitHub Models API
+  const ghToken = getGitHubToken();
+  if (ghToken) {
+    const model = options.model || config.llm.githubModels.model;
+    return _callGitHubModels(ghToken, model, messages, { maxTokens, temperature, jsonMode });
+  }
+
+  throw new Error('No LLM provider available. Set GH_TOKEN or ensure Copilot token exists.');
+}
+
+async function _callCopilot(token, model, messages, opts) {
   const body = {
     model,
     messages,
-    max_tokens: maxTokens,
-    temperature,
-    ...(jsonMode && { response_format: { type: 'json_object' } })
+    max_tokens: opts.maxTokens,
+    temperature: opts.temperature,
+    ...(opts.jsonMode && { response_format: { type: 'json_object' } })
   };
 
   const response = await fetch(config.llm.copilot.endpoint, {
@@ -55,17 +84,51 @@ async function callLLM(messages, options = {}) {
 
   if (!response.ok) {
     const errText = await response.text();
-    // Try fallback model
+    // Try fallback model on same provider
     if (model !== config.llm.copilot.fallbackModel) {
-      console.warn(`LLM call failed with ${model}, trying ${config.llm.copilot.fallbackModel}`);
-      return callLLM(messages, { ...options, model: config.llm.copilot.fallbackModel });
+      console.warn(`Copilot ${model} failed, trying ${config.llm.copilot.fallbackModel}`);
+      return _callCopilot(token, config.llm.copilot.fallbackModel, messages, opts);
+    }
+    // Try GitHub Models as last resort
+    const ghToken = getGitHubToken();
+    if (ghToken) {
+      console.warn('Copilot failed, falling back to GitHub Models');
+      return _callGitHubModels(ghToken, config.llm.githubModels.model, messages, opts);
     }
     throw new Error(`LLM API error (${response.status}): ${errText}`);
   }
 
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content;
+  return _parseResponse(await response.json(), opts.jsonMode);
+}
 
+async function _callGitHubModels(token, model, messages, opts) {
+  const body = {
+    model,
+    messages,
+    max_tokens: opts.maxTokens,
+    temperature: opts.temperature,
+    ...(opts.jsonMode && { response_format: { type: 'json_object' } })
+  };
+
+  const response = await fetch(`${config.llm.githubModels.endpoint}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`GitHub Models API error (${response.status}): ${errText}`);
+  }
+
+  return _parseResponse(await response.json(), opts.jsonMode);
+}
+
+function _parseResponse(data, jsonMode) {
+  const content = data.choices?.[0]?.message?.content;
   if (jsonMode && content) {
     try {
       return JSON.parse(content);
@@ -73,7 +136,6 @@ async function callLLM(messages, options = {}) {
       return content;
     }
   }
-
   return content;
 }
 
@@ -121,4 +183,4 @@ IMPORTANT RULES:
   return { response: result?.response || result };
 }
 
-module.exports = { callLLM, agentExecute, getCopilotToken };
+module.exports = { callLLM, agentExecute, getCopilotToken, getGitHubToken };

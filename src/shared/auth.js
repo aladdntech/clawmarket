@@ -9,6 +9,12 @@ function authMiddleware(req, res, next) {
     if (apiKey) req.apiKey = apiKey;
     return next();
   }
+
+  // Bot/webhook endpoints are public (POST from WhatsApp, Telegram, etc.)
+  if (req.originalUrl.startsWith('/api/bot')) {
+    if (apiKey) req.apiKey = apiKey;
+    return next();
+  }
   
   // For mutations (POST/PUT/DELETE), require API key
   if (!apiKey) {
