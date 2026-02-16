@@ -10,14 +10,34 @@ const { connect } = require('./src/shared/db');
 const { authMiddleware } = require('./src/shared/auth');
 const { errorHandler } = require('./src/shared/errors');
 
+// ─── Global Process Hardening ───────────────────────────────
+// Never crash on unhandled errors — log them and keep running
+process.on('uncaughtException', (err) => {
+  console.error('🔥 Uncaught Exception (server kept running):', err.message);
+  console.error(err.stack);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('🔥 Unhandled Rejection (server kept running):', reason);
+});
+
 const app = express();
 
 // ─── Security & Middleware ──────────────────────────────────
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 app.use(cookieParser());
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+
+// Safe JSON parsing — catch malformed bodies
+app.use((req, res, next) => {
+  express.json({ limit: '1mb' })(req, res, (err) => {
+    if (err) {
+      console.warn(`⚠️ Bad JSON from ${req.ip}: ${err.message}`);
+      return res.status(400).json({ error: 'Invalid JSON body', code: 'BAD_REQUEST' });
+    }
+    next();
+  });
+});
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // Rate limiting
 const limiter = rateLimit({

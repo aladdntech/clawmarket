@@ -39,10 +39,30 @@ router.post('/api/auth/register', async (req, res) => {
     });
 
     if (existing) {
-      return res.status(409).json({ 
-        error: 'An account with this email or phone already exists. Try logging in.',
-        code: 'ALREADY_EXISTS',
-        loginUrl: '/#/login'
+      // Account exists — auto-initiate login flow (send OTP)
+      const otp = generateOTP();
+      await getCollection('otps').insertOne({
+        userId: existing._id.toString(),
+        code: crypto.createHash('sha256').update(otp).digest('hex'),
+        type: 'login',
+        channel: normalizedEmail ? 'email' : 'phone',
+        destination: normalizedEmail || normalizedPhone,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+        createdAt: new Date()
+      });
+
+      return res.status(200).json({ 
+        success: true,
+        message: 'Account found! We sent you a login code. Check your email/phone.',
+        existingAccount: true,
+        userId: existing._id.toString(),
+        channel: normalizedEmail ? 'email' : 'phone',
+        destination: normalizedEmail ? 
+          normalizedEmail.replace(/(.{2})(.*)(@.*)/, '$1***$3') : 
+          normalizedPhone.replace(/(\d{3})(\d+)(\d{2})/, '$1****$3'),
+        verificationOTP: process.env.NODE_ENV === 'development' ? otp : undefined,
+        _devNote: process.env.NODE_ENV === 'development' ? 
+          'OTP shown in dev mode. In production, this would be sent via email/SMS.' : undefined
       });
     }
 
