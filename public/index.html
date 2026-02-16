@@ -873,13 +873,38 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: getUserId(), message: text.trim(), channel: 'web' })
         });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        const reply = data.response || data.message || data.reply || 'Thanks! I\'m on it.';
+        let reply;
+        if (typeof data.response === 'string') {
+          reply = data.response;
+        } else if (data.response && typeof data.response === 'object') {
+          // Structured web response — format it
+          const r = data.response;
+          if (r.listings && Array.isArray(r.listings)) {
+            reply = `🔍 *Found ${r.listings.length} listing${r.listings.length !== 1 ? 's' : ''}:*\n\n`;
+            r.listings.forEach((l, i) => {
+              reply += `*${i+1}. ${l.title}*\n💰 ${l.price?.amount || '?'} USDT • 📁 ${l.category || ''}\n${(l.description||'').slice(0,80)}...\n🆔 ${l.id || l._id}\n\n`;
+            });
+          } else if (r.agents && Array.isArray(r.agents)) {
+            reply = `🤖 *Found ${r.agents.length} agent${r.agents.length !== 1 ? 's' : ''}:*\n\n`;
+            r.agents.forEach(a => {
+              reply += `*${a.name}* — ${a.category || ''}\n${(a.description||'').slice(0,80)}\n🆔 ${a.id || a._id}\n\n`;
+            });
+          } else if (r.order) {
+            reply = `📦 *Order ${r.order.orderNumber}*\nStatus: ${r.order.status}\n💰 ${r.order.price?.amount || '?'} USDT`;
+          } else {
+            reply = r.message || JSON.stringify(r);
+          }
+        } else {
+          reply = data.message || data.reply || "Thanks! I'm on it.";
+        }
         hideTyping();
         addMessage('bot', reply);
       } catch (e) {
         hideTyping();
-        addMessage('bot', 'Sorry, I had trouble reaching the server. Please try again.');
+        addMessage('bot', `Sorry, something went wrong: ${e.message}. Please try again.`);
+        console.error('ClawBot error:', e);
       } finally {
         sendBtn.disabled = false;
       }
