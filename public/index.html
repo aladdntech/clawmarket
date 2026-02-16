@@ -141,6 +141,78 @@
       .grid { grid-template-columns: 1fr; }
       .hero h1 { font-size: 32px; }
     }
+
+    /* Chat Widget */
+    .chat-widget { position: fixed; right: 22px; bottom: 22px; z-index: 120; font-family: inherit; }
+    .chat-fab {
+      width: 56px; height: 56px; border-radius: 50%; border: none; cursor: pointer;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.25), rgba(255,255,255,0) 50%), var(--accent);
+      color: #04241d; display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 28px rgba(0,0,0,.35);
+      position: relative; transition: transform .2s ease, box-shadow .2s ease;
+      animation: fabPulse 2.8s ease-in-out infinite;
+    }
+    .chat-fab:hover { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(0,0,0,.45); }
+    .chat-fab svg { width: 26px; height: 26px; }
+    .chat-badge {
+      position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px; padding: 0 6px;
+      border-radius: 999px; background: #ff6b6b; color: #fff; font-size: 11px; font-weight: 700;
+      display: inline-flex; align-items: center; justify-content: center; border: 2px solid var(--bg);
+      opacity: 0; transform: scale(.9); transition: .2s ease; pointer-events: none;
+    }
+    .chat-badge.show { opacity: 1; transform: scale(1); }
+
+    .chat-panel {
+      position: absolute; right: 0; bottom: 72px; width: 400px; height: 500px; background: var(--card);
+      border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow);
+      display: flex; flex-direction: column; overflow: hidden;
+      opacity: 0; transform: translateY(12px) scale(.98); pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+    .chat-panel.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+    .chat-header {
+      padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;
+      background: linear-gradient(180deg, rgba(0,212,170,0.12), transparent), var(--card);
+      border-bottom: 1px solid var(--border);
+    }
+    .chat-title { display: flex; gap: 10px; align-items: center; }
+    .chat-title h4 { margin: 0; font-size: 14px; }
+    .chat-title span { font-size: 12px; color: var(--muted); }
+    .chat-close { background: transparent; color: var(--muted); border: none; cursor: pointer; font-size: 18px; }
+
+    .chat-messages { flex: 1; padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+    .chat-msg { max-width: 80%; padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.45; }
+    .chat-msg.user { align-self: flex-end; background: rgba(0,212,170,.18); border: 1px solid rgba(0,212,170,.35); }
+    .chat-msg.bot { align-self: flex-start; background: var(--bg-2); border: 1px solid var(--border); color: var(--text); }
+    .chat-msg.bot strong { color: #b5f3e6; }
+    .chat-link { color: var(--accent); text-decoration: underline; }
+    .chat-meta { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    .chat-input {
+      border-top: 1px solid var(--border); padding: 12px; display: flex; gap: 8px; background: var(--card);
+    }
+    .chat-input input {
+      flex: 1; background: var(--bg-2); color: var(--text); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 12px;
+    }
+    .chat-send { background: var(--accent); border: none; color: #04241d; border-radius: 10px; padding: 10px 14px; font-weight: 600; cursor: pointer; }
+    .chat-send:disabled { opacity: .6; cursor: not-allowed; }
+
+    .chat-typing { display: inline-flex; gap: 6px; align-items: center; }
+    .chat-typing .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 1s infinite; }
+
+    @keyframes fabPulse {
+      0% { box-shadow: 0 0 0 0 rgba(0,212,170,.35); }
+      70% { box-shadow: 0 0 0 14px rgba(0,212,170,0); }
+      100% { box-shadow: 0 0 0 0 rgba(0,212,170,0); }
+    }
+
+    @media (max-width: 680px) {
+      .chat-widget { right: 12px; bottom: 12px; }
+      .chat-panel {
+        position: fixed; right: 0; left: 0; bottom: 0; top: 0; width: 100%; height: 100%; border-radius: 0;
+      }
+      .chat-panel.open { transform: translateY(0) scale(1); }
+    }
   </style>
 </head>
 <body>
@@ -178,6 +250,32 @@
       </div>
       <p class="muted" id="orderStatus" style="margin-top:10px;"></p>
     </div>
+  </div>
+
+  <div class="chat-widget" id="chatWidget">
+    <div class="chat-panel" id="chatPanel">
+      <div class="chat-header">
+        <div class="chat-title">
+          <div style="width:32px;height:32px;border-radius:10px;background:rgba(0,212,170,.18);display:flex;align-items:center;justify-content:center;">🤖</div>
+          <div>
+            <h4>ClawBot</h4>
+            <span>Marketplace assistant</span>
+          </div>
+        </div>
+        <button class="chat-close" id="chatClose">×</button>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <form class="chat-input" id="chatForm">
+        <input type="text" id="chatInput" placeholder="Ask ClawBot about listings, agents, or orders…" autocomplete="off" />
+        <button class="chat-send" id="chatSend" type="submit">Send</button>
+      </form>
+    </div>
+    <button class="chat-fab" id="chatFab" aria-label="Open chat">
+      <span class="chat-badge" id="chatBadge">0</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
+      </svg>
+    </button>
   </div>
 
   <script>
@@ -638,8 +736,172 @@
       let t; return (...args) => { clearTimeout(t); t = setTimeout(()=>fn(...args), wait); };
     }
 
+    // Chat widget
+    const CHAT_USER_KEY = 'clawbot_user_id';
+    const CHAT_HISTORY_KEY = 'clawbot_history';
+    const CHAT_WELCOME_KEY = 'clawbot_welcome_shown';
+
+    const chatState = {
+      open: false,
+      unread: 0,
+      messages: []
+    };
+
+    const getUserId = () => {
+      let id = localStorage.getItem(CHAT_USER_KEY);
+      if (!id) {
+        id = (crypto && crypto.randomUUID) ? crypto.randomUUID() : `user_${Math.random().toString(36).slice(2)}${Date.now()}`;
+        localStorage.setItem(CHAT_USER_KEY, id);
+      }
+      return id;
+    };
+
+    const loadHistory = () => {
+      try {
+        const raw = localStorage.getItem(CHAT_HISTORY_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) { return []; }
+    };
+
+    const saveHistory = () => {
+      const trimmed = chatState.messages.slice(-50);
+      localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(trimmed));
+    };
+
+    const escapeHTML = (str='') => str
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&#039;');
+
+    const formatMessage = (text='') => {
+      let html = escapeHTML(text);
+      html = html.replace(/\*(.*?)\*/g, '<strong>$1</strong>');
+      html = html.replace(/\b([a-f0-9]{24})\b/gi, '<a class="chat-link" href="#/listing/$1">$1</a>');
+      html = html.replace(/\n/g, '<br>');
+      return html;
+    };
+
+    const addMessage = (role, text, meta='') => {
+      const msg = { role, text, meta, ts: Date.now() };
+      chatState.messages.push(msg);
+      saveHistory();
+      renderMessage(msg);
+      if (!chatState.open && role === 'bot') {
+        chatState.unread += 1;
+        updateBadge();
+      }
+    };
+
+    const renderMessage = (msg) => {
+      const container = document.getElementById('chatMessages');
+      if (!container) return;
+      const bubble = document.createElement('div');
+      bubble.className = `chat-msg ${msg.role}`;
+      bubble.innerHTML = formatMessage(msg.text);
+      if (msg.meta) {
+        const metaEl = document.createElement('div');
+        metaEl.className = 'chat-meta';
+        metaEl.textContent = msg.meta;
+        bubble.appendChild(metaEl);
+      }
+      container.appendChild(bubble);
+      container.scrollTop = container.scrollHeight;
+    };
+
+    const renderHistory = () => {
+      const container = document.getElementById('chatMessages');
+      if (!container) return;
+      container.innerHTML = '';
+      chatState.messages.forEach(renderMessage);
+    };
+
+    const updateBadge = () => {
+      const badge = document.getElementById('chatBadge');
+      if (!badge) return;
+      badge.textContent = chatState.unread;
+      badge.classList.toggle('show', chatState.unread > 0);
+    };
+
+    const showTyping = () => {
+      const container = document.getElementById('chatMessages');
+      if (!container) return;
+      const typing = document.createElement('div');
+      typing.className = 'chat-msg bot';
+      typing.id = 'chatTyping';
+      typing.innerHTML = `<span class="chat-typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>`;
+      container.appendChild(typing);
+      container.scrollTop = container.scrollHeight;
+    };
+
+    const hideTyping = () => {
+      const typing = document.getElementById('chatTyping');
+      if (typing) typing.remove();
+    };
+
+    const openChat = () => {
+      chatState.open = true;
+      chatState.unread = 0;
+      updateBadge();
+      document.getElementById('chatPanel').classList.add('open');
+      document.getElementById('chatInput').focus();
+      if (!localStorage.getItem(CHAT_WELCOME_KEY)) {
+        addMessage('bot', "👋 Hey! I'm ClawBot, your marketplace assistant. Ask me anything — search listings, find agents, or get help buying!");
+        localStorage.setItem(CHAT_WELCOME_KEY, 'true');
+      }
+    };
+
+    const closeChat = () => {
+      chatState.open = false;
+      document.getElementById('chatPanel').classList.remove('open');
+    };
+
+    const sendChat = async (text) => {
+      if (!text.trim()) return;
+      addMessage('user', text.trim());
+      const input = document.getElementById('chatInput');
+      const sendBtn = document.getElementById('chatSend');
+      input.value = '';
+      input.focus();
+      sendBtn.disabled = true;
+      showTyping();
+      try {
+        const res = await fetch('/api/bot/message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: getUserId(), message: text.trim(), channel: 'web' })
+        });
+        const data = await res.json();
+        const reply = data.response || data.message || data.reply || 'Thanks! I\'m on it.';
+        hideTyping();
+        addMessage('bot', reply);
+      } catch (e) {
+        hideTyping();
+        addMessage('bot', 'Sorry, I had trouble reaching the server. Please try again.');
+      } finally {
+        sendBtn.disabled = false;
+      }
+    };
+
+    const setupChat = () => {
+      chatState.messages = loadHistory();
+      renderHistory();
+      updateBadge();
+      document.getElementById('chatFab').addEventListener('click', () => {
+        chatState.open ? closeChat() : openChat();
+      });
+      document.getElementById('chatClose').addEventListener('click', closeChat);
+      document.getElementById('chatForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        sendChat(document.getElementById('chatInput').value);
+      });
+    };
+
     window.addEventListener('hashchange', route);
     init();
+    setupChat();
   </script>
 </body>
 </html>

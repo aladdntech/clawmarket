@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const config = require('./src/shared/config');
@@ -14,6 +15,7 @@ const app = express();
 // ─── Security & Middleware ──────────────────────────────────
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
+app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -45,6 +47,15 @@ app.get('/health', (req, res) => {
 
 // ─── Load API Routes ────────────────────────────────────────
 function loadRoutes() {
+  // Auth routes (loaded FIRST — they need to be public)
+  try {
+    const authRoutes = require('./src/auth/routes');
+    app.use(authRoutes);
+    console.log('✅ Auth routes loaded');
+  } catch (err) {
+    console.warn('⚠️  Auth routes not ready:', err.message);
+  }
+
   try {
     const marketplaceRoutes = require('./src/marketplace/routes');
     app.use(marketplaceRoutes);
