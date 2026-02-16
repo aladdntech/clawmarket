@@ -97,9 +97,13 @@ async function createOrder(listingId, buyerAgentId, quantity = 1, shippingAddres
     quantity,
     shippingAddress: shippingAddress || null,
     escrow: {
-      expectedAmount: fees.grossAmount,
-      fee: fees.fee,
-      netAmount: fees.netAmount,
+      expectedAmount: fees.totalAmount,
+      platformFee: fees.platformFee,
+      networkFee: fees.networkFee,
+      sellerReceives: fees.sellerReceives,
+      // Legacy compat
+      fee: fees.platformFee,
+      netAmount: fees.sellerReceives,
       depositAddress: config.tron.escrowAddress,
       depositReference: null,
       depositTxHash: null,
@@ -115,7 +119,11 @@ async function createOrder(listingId, buyerAgentId, quantity = 1, shippingAddres
       timelineEntry('order_created', buyerAgentId.toString(), {
         orderNumber,
         listingId,
-        amount: fees.grossAmount
+        itemAmount: fees.grossAmount,
+        platformFee: fees.platformFee,
+        networkFee: fees.networkFee,
+        totalAmount: fees.totalAmount,
+        sellerReceives: fees.sellerReceives
       })
     ],
     createdAt: now,
@@ -127,11 +135,13 @@ async function createOrder(listingId, buyerAgentId, quantity = 1, shippingAddres
 
   await logAudit('order_created', 'agent', buyerAgentId.toString(), 'order', order._id.toString(), {
     orderNumber,
-    amount: fees.grossAmount,
+    totalAmount: fees.totalAmount,
+    platformFee: fees.platformFee,
+    networkFee: fees.networkFee,
     listingId
   });
 
-  console.log(`[ESCROW] Order ${orderNumber} created — ${fees.grossAmount} USDT`);
+  console.log(`[ESCROW] Order ${orderNumber} created — ${fees.grossAmount} USDT + ${fees.networkFee} network fee = ${fees.totalAmount} total`);
   return order;
 }
 
@@ -338,23 +348,23 @@ async function releaseEscrow(orderId) {
     throw new ValidationError('Seller has no TRON wallet configured');
   }
 
-  const netAmount = order.escrow.netAmount;
-  const fee = order.escrow.fee;
+  const sellerPayout = order.escrow.sellerReceives || order.escrow.netAmount;
+  const platformFee = order.escrow.platformFee || order.escrow.fee;
+  const networkFee = order.escrow.networkFee || 0;
 
-  console.log(`[ESCROW] Releasing ${netAmount} USDT to seller ${tronWallet.address}, fee ${fee} USDT`);
+  console.log(`[ESCROW] Releasing ${sellerPayout} USDT to seller ${tronWallet.address} (platform fee: ${platformFee}, network fee: ${networkFee} retained)`);
 
   try {
-    // Send net amount to seller
-    const releaseTxHash = await sendUSDT(tronWallet.address, netAmount);
+    // Send seller payout (item price minus platform fee)
+    // Network fee + platform fee stay in escrow wallet (self-sustaining)
+    const releaseTxHash = await sendUSDT(tronWallet.address, sellerPayout);
 
     const updateFields = {
       'escrow.releaseTxHash': releaseTxHash,
       updatedAt: new Date()
     };
 
-    // Send fee to platform (stays in escrow wallet — no separate transfer needed
-    // unless a separate platform wallet is configured). Log it anyway.
-    // For now, fee remains in escrow wallet as platform revenue.
+    // Platform fee + network fee remain in escrow wallet — self-sustaining model
     updateFields['escrow.feeTxHash'] = 'retained_in_escrow';
 
     await orders.updateOne({ _id: oid }, {
@@ -362,8 +372,9 @@ async function releaseEscrow(orderId) {
       $push: {
         timeline: timelineEntry('escrow_released', 'system', {
           releaseTxHash,
-          netAmount,
-          fee,
+          sellerPayout,
+          platformFee,
+          networkFee,
           sellerAddress: tronWallet.address
         })
       }
@@ -371,8 +382,9 @@ async function releaseEscrow(orderId) {
 
     await logAudit('escrow_released', 'system', 'system', 'order', orderId.toString(), {
       releaseTxHash,
-      netAmount,
-      fee,
+      sellerPayout,
+      platformFee,
+      networkFee,
       sellerAddress: tronWallet.address
     });
 

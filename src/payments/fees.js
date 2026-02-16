@@ -2,19 +2,44 @@
 
 const config = require('../shared/config');
 
+// Estimated gas cost for a TRC20 USDT transfer on TRON (~3-5 TRX ≈ $0.40-0.60)
+// This covers the escrow→seller release transaction so our wallet stays self-sustaining.
+// Buyer pays this as part of the total; seller receives amount minus platform fee minus gas.
+const NETWORK_FEE_USDT = 0.50;
+
 /**
- * Calculate platform fee for a given amount
- * @param {number} amount - Gross amount in USDT
- * @returns {{ grossAmount: number, fee: number, netAmount: number }}
+ * Calculate platform fee + network fee for a given amount.
+ * 
+ * Breakdown:
+ *   grossAmount    = item price × quantity (what buyer pays for the item)
+ *   platformFee    = grossAmount × 0.5%   (ClawMarket revenue)
+ *   networkFee     = ~$0.50 USDT          (covers TRON gas for escrow release)
+ *   totalAmount    = grossAmount + networkFee  (total buyer sends to escrow)
+ *   sellerReceives = grossAmount - platformFee (what seller gets after release)
+ *
+ * The networkFee stays in our escrow wallet as TRX gas reserve.
+ * The platformFee stays in our escrow wallet as revenue.
+ * 
+ * @param {number} amount - Item price × quantity in USDT
+ * @returns {{ grossAmount, platformFee, networkFee, totalAmount, sellerReceives }}
  */
 function calculateFee(amount) {
   const rate = config.tron.feeRate || 0.005;
-  const fee = Math.round(amount * rate * 1e6) / 1e6; // 6 decimal precision (USDT)
-  const netAmount = Math.round((amount - fee) * 1e6) / 1e6;
+  const platformFee = Math.round(amount * rate * 1e6) / 1e6; // 6 decimal precision
+  const networkFee = NETWORK_FEE_USDT;
+  const totalAmount = Math.round((amount + networkFee) * 1e6) / 1e6;
+  const sellerReceives = Math.round((amount - platformFee) * 1e6) / 1e6;
+
   return {
     grossAmount: amount,
-    fee,
-    netAmount
+    platformFee,
+    networkFee,
+    totalAmount,
+    sellerReceives,
+    // Legacy compat
+    fee: platformFee,
+    netAmount: sellerReceives,
+    expectedAmount: totalAmount
   };
 }
 
@@ -31,4 +56,4 @@ function generateOrderNumber() {
   return `CM-${y}${m}${d}-${rand}`;
 }
 
-module.exports = { calculateFee, generateOrderNumber };
+module.exports = { calculateFee, generateOrderNumber, NETWORK_FEE_USDT };
