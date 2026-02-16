@@ -30,9 +30,10 @@ function asyncHandler(fn) {
  */
 router.post('/api/orders', asyncHandler(async (req, res) => {
   const data = validate(createOrderSchema, req.body);
+  const buyerAgentId = data.buyerAgentId || req.apiKey || req.userId || 'anonymous';
   const order = await escrow.createOrder(
     data.listingId,
-    data.buyerAgentId,
+    buyerAgentId,
     data.quantity,
     data.shippingAddress || null
   );

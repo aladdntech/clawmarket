@@ -68,6 +68,12 @@ function sanitizeRequest(req, res, next) {
     sanitizeObject(req.body);
   }
   if (req.query && typeof req.query === 'object') {
+    // Flatten any nested objects in query params to strings (prevent NoSQL injection via ?key[$op]=val)
+    for (const key of Object.keys(req.query)) {
+      if (typeof req.query[key] === 'object') {
+        req.query[key] = String(req.query[key]);
+      }
+    }
     sanitizeObject(req.query);
   }
   next();

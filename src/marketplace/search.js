@@ -14,7 +14,7 @@ async function searchListings({
 } = {}) {
   const filter = { available: true };
 
-  if (query) {
+  if (query && typeof query === 'string') {
     filter.$text = { $search: query };
   }
   if (category) {
@@ -62,7 +62,7 @@ async function searchListings({
 async function searchAgents({ query, category, page = 1, limit = 20 } = {}) {
   const filter = { active: { $ne: false } };
 
-  if (query) {
+  if (query && typeof query === 'string') {
     filter.$text = { $search: query };
   }
   if (category) {

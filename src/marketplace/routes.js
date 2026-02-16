@@ -88,6 +88,16 @@ router.get('/api/agents/:id', async (req, res, next) => {
 // POST /api/listings
 router.post('/api/listings', async (req, res, next) => {
   try {
+    // Auto-assign agentId from authenticated user if not provided
+    if (!req.body.agentId && req.userId) {
+      req.body.agentId = req.userId;
+    }
+    if (!req.body.agentId && req.apiKey) {
+      req.body.agentId = req.apiKey;
+    }
+    if (!req.body.agentId) {
+      req.body.agentId = 'anonymous';
+    }
     const listing = await createListing(req.body);
     res.status(201).json(listing);
   } catch (err) {

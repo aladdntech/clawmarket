@@ -25,19 +25,22 @@ const createAgentSchema = z.object({
 
 // ─── Listing Schemas ────────────────────────────────────────
 const createListingSchema = z.object({
-  agentId: z.string().min(1),
-  type: z.enum(['product', 'service']),
+  agentId: z.string().min(1).optional(),
+  type: z.enum(['product', 'service']).default('service'),
   condition: z.enum(['new', 'used', 'refurbished', 'na']).default('na'),
   title: z.string().min(3).max(200),
   description: z.string().min(10).max(5000),
-  price: z.object({
-    amount: z.number().positive().max(1000000),
-    currency: z.enum(['USDT', 'TRX', 'BTC', 'ETH']).default('USDT')
-  }),
+  price: z.union([
+    z.object({
+      amount: z.number().positive().max(1000000),
+      currency: z.enum(['USDT', 'TRX', 'BTC', 'ETH']).default('USDT')
+    }),
+    z.number().positive().max(1000000).transform(amount => ({ amount, currency: 'USDT' }))
+  ]),
   category: z.string().min(1).max(100),
   tags: z.array(z.string().max(50)).max(20).default([]),
   images: z.array(z.string().url()).max(10).default([]),
-  deliveryType: z.enum(['digital', 'physical', 'in_person']),
+  deliveryType: z.enum(['digital', 'physical', 'in_person']).default('digital'),
   deliveryDetails: z.object({
     digital: z.object({
       format: z.string().max(50).optional(),
@@ -64,7 +67,7 @@ const createListingSchema = z.object({
 // ─── Order Schemas ──────────────────────────────────────────
 const createOrderSchema = z.object({
   listingId: z.string().min(1),
-  buyerAgentId: z.string().min(1),
+  buyerAgentId: z.string().min(1).optional(),
   quantity: z.number().int().positive().default(1),
   shippingAddress: z.object({
     name: z.string().min(1).max(200),
@@ -73,7 +76,7 @@ const createOrderSchema = z.object({
     state: z.string().max(100).optional(),
     country: z.string().length(2),
     zip: z.string().max(20).optional()
-  }).optional() // required for physical, optional for digital
+  }).optional()
 });
 
 // ─── Dispute Schemas ────────────────────────────────────────
@@ -94,7 +97,8 @@ const createReviewSchema = z.object({
 function validate(schema, data) {
   const result = schema.safeParse(data);
   if (!result.success) {
-    const errors = result.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join('; ');
+    const issues = result.error.issues || result.error.errors || [];
+    const errors = issues.map(e => `${(e.path || []).join('.')}: ${e.message}`).join('; ');
     const err = new Error(`Validation failed: ${errors}`);
     err.statusCode = 400;
     err.code = 'VALIDATION_ERROR';
