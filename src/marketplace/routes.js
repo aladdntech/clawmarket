@@ -14,9 +14,23 @@ const {
 } = require('./models');
 const { searchListings, searchAgents, getCategories, getStats } = require('./search');
 const { getCollection } = require('../shared/db');
+const { validate, listingFilterSchema } = require('../shared/validators');
 
 // Apply auth middleware to all routes
 router.use(authMiddleware);
+
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const toRad = (v) => (v * Math.PI) / 180;
+  const R = 6371; // km
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 // ─── Users ──────────────────────────────────────────────────
 
@@ -108,23 +122,90 @@ router.post('/api/listings', async (req, res, next) => {
 // GET /api/listings
 router.get('/api/listings', async (req, res, next) => {
   try {
+    const params = validate(listingFilterSchema, req.query);
     const {
       search, category, type, condition,
       minPrice, maxPrice, deliveryType,
+      country, city, shipsTo, nearby, radius,
       page, limit,
-    } = req.query;
-    const result = await searchListings({
-      query: search,
-      category,
-      type,
-      condition,
-      minPrice: minPrice !== undefined ? Number(minPrice) : undefined,
-      maxPrice: maxPrice !== undefined ? Number(maxPrice) : undefined,
-      deliveryType,
-      page: page ? Number(page) : undefined,
-      limit: limit ? Number(limit) : undefined,
+    } = params;
+
+    const hasLocationFilters = !!(country || city || shipsTo || nearby || radius);
+
+    if (!hasLocationFilters) {
+      const result = await searchListings({
+        query: search,
+        category,
+        type,
+        condition,
+        minPrice: minPrice !== undefined ? Number(minPrice) : undefined,
+        maxPrice: maxPrice !== undefined ? Number(maxPrice) : undefined,
+        deliveryType,
+        page: page ? Number(page) : undefined,
+        limit: limit ? Number(limit) : undefined,
+      });
+      return res.json(result);
+    }
+
+    const filter = { available: true };
+    if (search && typeof search === 'string') {
+      filter.$text = { $search: search };
+    }
+    if (category) filter.category = category;
+    if (type) filter.type = type;
+    if (condition) filter.condition = condition;
+    if (deliveryType) filter.deliveryType = deliveryType;
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      filter['price.amount'] = {};
+      if (minPrice !== undefined) filter['price.amount'].$gte = Number(minPrice);
+      if (maxPrice !== undefined) filter['price.amount'].$lte = Number(maxPrice);
+    }
+    if (country) filter['location.country'] = country;
+    if (city) filter['location.city'] = city;
+    if (shipsTo) {
+      filter['location.shipsTo'] = { $in: [shipsTo, shipsTo.toUpperCase(), 'worldwide', 'WORLDWIDE'] };
+    }
+
+    const safeLimit = Math.min(Math.max(Number(limit) || 20, 1), 100);
+    const safePage = Math.max(Number(page) || 1, 1);
+    const skip = (safePage - 1) * safeLimit;
+
+    const col = getCollection('listings');
+    const sort = search ? { score: { $meta: 'textScore' } } : { createdAt: -1 };
+    const projection = search ? { score: { $meta: 'textScore' } } : {};
+
+    let listings = [];
+    let total = 0;
+
+    if (nearby) {
+      const [latStr, lngStr] = nearby.split(',');
+      const lat = Number(latStr);
+      const lng = Number(lngStr);
+      const kmRadius = Number(radius) || 50;
+
+      const all = await col.find(filter, { projection }).sort(sort).toArray();
+      const filtered = all.filter((listing) => {
+        const coords = listing.location?.coordinates;
+        if (!coords || typeof coords.lat !== 'number' || typeof coords.lng !== 'number') return false;
+        const distance = haversineKm(lat, lng, coords.lat, coords.lng);
+        return distance <= kmRadius;
+      });
+
+      total = filtered.length;
+      listings = filtered.slice(skip, skip + safeLimit);
+    } else {
+      [listings, total] = await Promise.all([
+        col.find(filter, { projection }).sort(sort).skip(skip).limit(safeLimit).toArray(),
+        col.countDocuments(filter),
+      ]);
+    }
+
+    res.json({
+      listings,
+      total,
+      page: safePage,
+      pages: Math.ceil(total / safeLimit) || 1,
     });
-    res.json(result);
   } catch (err) {
     next(err);
   }

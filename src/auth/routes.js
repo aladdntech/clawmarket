@@ -11,6 +11,7 @@ const {
   generateApiKey,
   generateRecoveryCodes
 } = require('../shared/auth');
+const { validate, userLocationSchema, agentLocationSchema, updateProfileSchema } = require('../shared/validators');
 
 const router = express.Router();
 
@@ -29,7 +30,7 @@ async function isOTPRateLimited(destination) {
 // Simple registration: name + (email OR phone) — no password needed
 router.post('/api/auth/register', async (req, res) => {
   try {
-    const { name, email, phone, agentName, agentDescription, agentCategory } = req.body;
+    const { name, email, phone, agentName, agentDescription, agentCategory, location, agentLocation } = req.body;
 
     if (!name || (!email && !phone)) {
       return res.status(400).json({ 
@@ -42,6 +43,11 @@ router.post('/api/auth/register', async (req, res) => {
     const normalizedEmail = email?.toLowerCase().trim();
     const normalizedPhone = phone?.replace(/\D/g, '');
     const destination = normalizedEmail || normalizedPhone;
+
+    const cleanLocation = location ? validate(userLocationSchema, location) : undefined;
+    const cleanAgentLocation = agentLocation
+      ? validate(agentLocationSchema, agentLocation)
+      : (cleanLocation ? { country: cleanLocation.country, city: cleanLocation.city } : undefined);
 
     if (await isOTPRateLimited(destination)) {
       return res.status(429).json({
@@ -99,6 +105,7 @@ router.post('/api/auth/register', async (req, res) => {
       email: normalizedEmail || null,
       phone: normalizedPhone || null,
       verified: false,
+      location: cleanLocation || undefined,
       createdAt: new Date(),
       updatedAt: new Date(),
       recoveryCodes: recoveryCodes.map(c => ({ 
@@ -124,6 +131,7 @@ router.post('/api/auth/register', async (req, res) => {
         ownerId: result.insertedId.toString(),
         apiKey,
         capabilities: [],
+        location: cleanAgentLocation || undefined,
         rating: { average: 0, count: 0 },
         active: true,
         createdAt: new Date()
@@ -560,6 +568,60 @@ router.get('/api/auth/me', async (req, res) => {
   } catch (err) {
     console.error('Auth check error:', err);
     res.json({ authenticated: false });
+  }
+});
+
+// ─── Update Profile ────────────────────────────────────────
+router.patch('/api/auth/profile', async (req, res) => {
+  try {
+    const token = req.headers['authorization']?.replace('Bearer ', '') || 
+                  req.query.sessionToken;
+
+    if (!token) {
+      return res.status(401).json({ error: 'Not authenticated', code: 'AUTH_REQUIRED' });
+    }
+
+    const session = await getCollection('sessions').findOne({
+      token,
+      expiresAt: { $gt: new Date() }
+    });
+
+    if (!session) {
+      return res.status(401).json({ error: 'Session expired', code: 'SESSION_EXPIRED' });
+    }
+
+    const data = validate(updateProfileSchema, req.body || {});
+    const updates = {};
+    if (data.location) updates.location = data.location;
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: 'No valid fields to update', code: 'NO_UPDATES' });
+    }
+
+    await getCollection('users').updateOne(
+      { _id: new ObjectId(session.userId) },
+      { $set: { ...updates, updatedAt: new Date() } }
+    );
+
+    const user = await getCollection('users').findOne(
+      { _id: new ObjectId(session.userId) },
+      { projection: { recoveryCodes: 0 } }
+    );
+
+    res.json({
+      success: true,
+      user: {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        verified: user.verified,
+        location: user.location
+      }
+    });
+  } catch (err) {
+    console.error('Profile update error:', err);
+    res.status(500).json({ error: 'Failed to update profile', code: 'SERVER_ERROR' });
   }
 });
 

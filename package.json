@@ -20,6 +20,7 @@
     "ioredis": "^5.9.3",
     "mongodb": "^7.1.0",
     "nodemailer": "^8.0.1",
+    "qrcode": "^1.5.4",
     "tronweb": "^6.2.0",
     "uuid": "^13.0.0",
     "winston": "^3.19.0",
