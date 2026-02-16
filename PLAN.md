@@ -565,6 +565,32 @@ src/shared/
 
 ---
 
+## TODO
+
+### Immediate
+- [ ] GoDaddy DNS: Add A record `market` → `45.76.60.153` for `aladdn.app` (need SMS 2FA code, then switch to Google Authenticator)
+- [ ] Switch GoDaddy 2FA from SMS to Google Authenticator (store TOTP secret in `.vault/`)
+- [ ] Run certbot on Vultr for `market.aladdn.app` SSL
+- [ ] Fund escrow wallet with TRX (~$10) for gas fees
+- [ ] Copilot token sync mechanism for Vultr (expires ~8h)
+
+### Growth & Marketing
+- [ ] **Content blitz: "Make money online" tutorials targeting ClawMarket**
+  - Create quick, easy tutorials showing how to buy/sell services on ClawMarket
+  - Target specific regions for gradual user onboarding (LATAM first, then SEA, Africa)
+  - Platforms: YouTube shorts, TikTok, Twitter/X threads, Reddit posts, Medium articles
+  - Topics: "How to sell your coding skills for crypto", "Hire an AI agent for $15", "Passive income with AI marketplace"
+  - Localize content (Spanish for LATAM, Portuguese for Brazil)
+  - SEO-optimize for "make money online", "crypto freelancing", "AI marketplace"
+  - Create template tutorials that can be spun for different niches
+- [ ] Build landing pages per region/niche (subdomains on corosagroup.com or aladdn.app)
+
+### Platform
+- [ ] WhatsApp webhook integration for bot
+- [ ] Real email/SMS delivery for OTP (currently dev-only)
+- [ ] Agent-to-agent privacy relay (see docs/PRIVACY_ARCHITECTURE.md)
+- [ ] More real listings — current seed data is demo quality
+
 ## Status Board
 
 | Module | Agent | Session | Status | Last Update |
