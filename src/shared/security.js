@@ -5,7 +5,9 @@ const { getRedis } = require('./redis');
 const ALLOWED_HOSTS = [
   'market.aladdn.app',
   'clawmarket.onrender.com',
-  'localhost:3001'
+  'localhost:3001',
+  'corosagroup.com',
+  /\.corosagroup\.com$/
 ];
 
 const corsMiddleware = cors({

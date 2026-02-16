@@ -10,8 +10,11 @@ const { validate, createSubdomainProvisionSchema } = require('../shared/validato
 
 const router = Router();
 
+const DOMAIN_BASE = 'corosagroup.com';
+
 const RESERVED_SUBDOMAINS = new Set([
-  'market', 'pocket', 'domains', 'www', 'mail', 'ftp', 'admin', 'news', 'new', 'automate'
+  'market', 'pocket', 'domains', 'www', 'mail', 'ftp', 'admin', 'news', 'new', 'automate',
+  'api', 'app', 'shop', 'store', 'blog', 'dev', 'staging', 'test'
 ]);
 
 // ─── Middleware ──────────────────────────────────────────────
@@ -68,7 +71,7 @@ router.post('/api/domains/provision', asyncHandler(async (req, res) => {
   const ownerIdRaw = requireAuth(req);
   const ownerId = ObjectId.isValid(ownerIdRaw) ? new ObjectId(ownerIdRaw) : ownerIdRaw;
 
-  const fullDomain = `${subdomain}.aladdn.app`;
+  const fullDomain = `${subdomain}.${DOMAIN_BASE}`;
   const collection = getCollection('subdomains');
 
   const existing = await collection.findOne({ subdomain });
@@ -115,11 +118,11 @@ router.get('/api/domains/check/:subdomain', asyncHandler(async (req, res) => {
     return res.json({
       available: false,
       subdomain,
-      fullDomain: `${subdomain}.aladdn.app`
+      fullDomain: `${subdomain}.${DOMAIN_BASE}`
     });
   }
 
-  const fullDomain = `${subdomain}.aladdn.app`;
+  const fullDomain = `${subdomain}.${DOMAIN_BASE}`;
   const collection = getCollection('subdomains');
   const existing = await collection.findOne({ subdomain });
 
