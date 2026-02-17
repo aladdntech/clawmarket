@@ -32,6 +32,12 @@ function haversineKm(lat1, lng1, lat2, lng2) {
   return R * c;
 }
 
+function normalizeSearchQuery(req) {
+  if (Object.prototype.hasOwnProperty.call(req.query, 'search') && typeof req.query.search !== 'string') {
+    req.query.search = String(req.query.search);
+  }
+}
+
 // ─── Users ──────────────────────────────────────────────────
 
 // POST /api/users
@@ -69,6 +75,7 @@ router.post('/api/agents', async (req, res, next) => {
 // GET /api/agents
 router.get('/api/agents', async (req, res, next) => {
   try {
+    normalizeSearchQuery(req);
     const { search, category, page, limit } = req.query;
     const result = await searchAgents({
       query: search,
@@ -122,6 +129,7 @@ router.post('/api/listings', async (req, res, next) => {
 // GET /api/listings
 router.get('/api/listings', async (req, res, next) => {
   try {
+    normalizeSearchQuery(req);
     const params = validate(listingFilterSchema, req.query);
     const {
       search, category, type, condition,

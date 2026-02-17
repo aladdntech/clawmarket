@@ -41,6 +41,46 @@ function timelineEntry(event, by, details = {}) {
   return { event, at: new Date(), by, details };
 }
 
+async function resolveParticipant(id, label = 'Participant') {
+  const agents = getCollection('agents');
+  const users = getCollection('users');
+  const oid = toObjectId(id);
+
+  let profile = await agents.findOne({ _id: oid });
+  if (profile) return { type: 'agent', profile };
+
+  profile = await users.findOne({ _id: oid });
+  if (profile) return { type: 'user', profile };
+
+  throw new NotFoundError(label);
+}
+
+function summarizeParticipant(participant) {
+  const profile = participant.profile || {};
+  return {
+    type: participant.type,
+    id: profile._id ? profile._id.toString() : null,
+    userId: profile.userId ? profile.userId.toString() : (participant.type === 'user' && profile._id ? profile._id.toString() : null),
+    displayName: profile.displayName || profile.name || profile.username || null
+  };
+}
+
+async function resolveTronWalletAddress(participant) {
+  const profile = participant.profile || {};
+  const directAddress = profile.walletAddress || (profile.wallets || []).find(w => w.network === 'tron')?.address;
+  if (directAddress) return directAddress;
+
+  if (participant.type === 'agent' && profile.userId) {
+    const user = await getCollection('users').findOne({ _id: toObjectId(profile.userId) });
+    if (user) {
+      const userAddress = user.walletAddress || (user.wallets || []).find(w => w.network === 'tron')?.address;
+      if (userAddress) return userAddress;
+    }
+  }
+
+  return config.tron.escrowAddress;
+}
+
 // ─── Escrow operations ──────────────────────────────────────
 
 /**
@@ -48,7 +88,6 @@ function timelineEntry(event, by, details = {}) {
  */
 async function createOrder(listingId, buyerAgentId, quantity = 1, shippingAddress = null) {
   const listings = getCollection('listings');
-  const agents = getCollection('agents');
   const orders = getCollection('orders');
 
   // Look up listing
@@ -61,13 +100,11 @@ async function createOrder(listingId, buyerAgentId, quantity = 1, shippingAddres
     throw new ValidationError(`Insufficient stock (available: ${listing.stock})`);
   }
 
-  // Look up seller agent
-  const sellerAgent = await agents.findOne({ _id: toObjectId(listing.agentId) });
-  if (!sellerAgent) throw new NotFoundError('Seller agent');
+  // Look up seller participant (agent or user)
+  const sellerParticipant = await resolveParticipant(listing.agentId, 'Seller');
 
-  // Look up buyer agent
-  const buyerAgent = await agents.findOne({ _id: toObjectId(buyerAgentId) });
-  if (!buyerAgent) throw new NotFoundError('Buyer agent');
+  // Look up buyer participant (agent or user)
+  const buyerParticipant = await resolveParticipant(buyerAgentId, 'Buyer');
 
   // Physical listings need a shipping address
   if (listing.deliveryType === 'physical' && !shippingAddress) {
@@ -86,6 +123,8 @@ async function createOrder(listingId, buyerAgentId, quantity = 1, shippingAddres
     listingId: toObjectId(listingId),
     buyerAgentId: toObjectId(buyerAgentId),
     sellerAgentId: toObjectId(listing.agentId),
+    buyerParticipant: summarizeParticipant(buyerParticipant),
+    sellerParticipant: summarizeParticipant(sellerParticipant),
     status: 'pending_payment',
     listing: {
       title: listing.title,
@@ -334,30 +373,20 @@ async function releaseEscrow(orderId) {
   const order = await orders.findOne({ _id: oid });
   if (!order) throw new NotFoundError('Order');
 
-  // Look up seller agent to get their wallet
-  const agents = getCollection('agents');
-  const seller = await agents.findOne({ _id: order.sellerAgentId });
-  if (!seller) throw new NotFoundError('Seller agent');
-
-  // Find seller's TRON wallet
-  const sellerUser = await getCollection('users').findOne({ _id: toObjectId(seller.userId) });
-  if (!sellerUser) throw new NotFoundError('Seller user');
-
-  const tronWallet = (sellerUser.wallets || []).find(w => w.network === 'tron');
-  if (!tronWallet) {
-    throw new ValidationError('Seller has no TRON wallet configured');
-  }
+  // Look up seller participant to get their wallet
+  const sellerParticipant = await resolveParticipant(order.sellerAgentId, 'Seller');
+  const sellerAddress = await resolveTronWalletAddress(sellerParticipant);
 
   const sellerPayout = order.escrow.sellerReceives || order.escrow.netAmount;
   const platformFee = order.escrow.platformFee || order.escrow.fee;
   const networkFee = order.escrow.networkFee || 0;
 
-  console.log(`[ESCROW] Releasing ${sellerPayout} USDT to seller ${tronWallet.address} (platform fee: ${platformFee}, network fee: ${networkFee} retained)`);
+  console.log(`[ESCROW] Releasing ${sellerPayout} USDT to seller ${sellerAddress} (platform fee: ${platformFee}, network fee: ${networkFee} retained)`);
 
   try {
     // Send seller payout (item price minus platform fee)
     // Network fee + platform fee stay in escrow wallet (self-sustaining)
-    const releaseTxHash = await sendUSDT(tronWallet.address, sellerPayout);
+    const releaseTxHash = await sendUSDT(sellerAddress, sellerPayout);
 
     const updateFields = {
       'escrow.releaseTxHash': releaseTxHash,
@@ -375,7 +404,7 @@ async function releaseEscrow(orderId) {
           sellerPayout,
           platformFee,
           networkFee,
-          sellerAddress: tronWallet.address
+          sellerAddress
         })
       }
     });
@@ -385,7 +414,7 @@ async function releaseEscrow(orderId) {
       sellerPayout,
       platformFee,
       networkFee,
-      sellerAddress: tronWallet.address
+      sellerAddress
     });
 
     console.log(`[ESCROW] Escrow released for order ${order.orderNumber} — tx ${releaseTxHash}`);
@@ -436,22 +465,13 @@ async function refundOrder(orderId) {
   }
 
   // Look up buyer wallet
-  const agents = getCollection('agents');
-  const buyer = await agents.findOne({ _id: order.buyerAgentId });
-  if (!buyer) throw new NotFoundError('Buyer agent');
-
-  const buyerUser = await getCollection('users').findOne({ _id: toObjectId(buyer.userId) });
-  if (!buyerUser) throw new NotFoundError('Buyer user');
-
-  const tronWallet = (buyerUser.wallets || []).find(w => w.network === 'tron');
-  if (!tronWallet) {
-    throw new ValidationError('Buyer has no TRON wallet configured');
-  }
+  const buyerParticipant = await resolveParticipant(order.buyerAgentId, 'Buyer');
+  const buyerAddress = await resolveTronWalletAddress(buyerParticipant);
 
   const refundAmount = order.escrow.expectedAmount;
 
   try {
-    const refundTxHash = await sendUSDT(tronWallet.address, refundAmount);
+    const refundTxHash = await sendUSDT(buyerAddress, refundAmount);
 
     await orders.updateOne({ _id: oid }, {
       $set: {
@@ -463,7 +483,7 @@ async function refundOrder(orderId) {
         timeline: timelineEntry('order_refunded', 'system', {
           refundTxHash,
           refundAmount,
-          buyerAddress: tronWallet.address
+          buyerAddress
         })
       }
     });
@@ -471,7 +491,7 @@ async function refundOrder(orderId) {
     await logAudit('order_refunded', 'system', 'system', 'order', orderId.toString(), {
       refundTxHash,
       refundAmount,
-      buyerAddress: tronWallet.address
+      buyerAddress
     });
 
     console.log(`[ESCROW] Order ${order.orderNumber} refunded — tx ${refundTxHash}`);
