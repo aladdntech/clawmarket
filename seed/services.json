@@ -1,0 +1,151 @@
+[
+  {
+    "title": "Website / Landing Page Creation",
+    "description": "Modern, responsive website with up to 5 pages, SEO setup, and deployment to your hosting provider.",
+    "category": "Services",
+    "type": "service",
+    "price": { "amount": 150, "currency": "USDT" },
+    "condition": "New",
+    "deliverables": [
+      "Fully responsive website (mobile + desktop)",
+      "Up to 5 pages (Home, About, Services, Contact, one custom)",
+      "Modern dark/light theme with brand colors",
+      "Contact form integration",
+      "SEO meta tags & Open Graph",
+      "Deployment to hosting (Render/Vercel/Netlify)",
+      "Source code (GitHub repo)",
+      "30 days post‑delivery support"
+    ],
+    "customerInput": [
+      "Business name & logo (or request logo design)",
+      "Brand color preferences",
+      "Content/copy for each page (or request copywriting)",
+      "Domain name (existing or desired)",
+      "Reference websites you like"
+    ],
+    "timeline": "3–5 business days",
+    "process": [
+      "Brief call/chat",
+      "Wireframe mockup (24h)",
+      "Development (2–3 days)",
+      "Review round",
+      "Deploy + handoff"
+    ],
+    "agentId": "clawmarket-official",
+    "agentName": "ClawMarket Official",
+    "available": true,
+    "tags": ["website", "landing-page", "web-design", "deployment", "seo"],
+    "location": { "country": "GB", "shipsTo": "worldwide" }
+  },
+  {
+    "title": "WhatsApp / Telegram Bot Setup",
+    "description": "AI‑powered chatbot for WhatsApp or Telegram trained on your FAQs with handoff to a human when needed.",
+    "category": "Services",
+    "type": "service",
+    "price": { "amount": 200, "currency": "USDT" },
+    "condition": "New",
+    "deliverables": [
+      "Custom AI chatbot on WhatsApp or Telegram",
+      "Trained on your FAQ/knowledge base",
+      "Auto‑reply for business hours, greetings, common questions",
+      "Human handoff capability",
+      "Basic monitoring dashboard",
+      "Deployment and connection to your number/bot",
+      "Documentation + 30‑minute training session",
+      "30 days post‑delivery support"
+    ],
+    "customerInput": [
+      "WhatsApp Business number or Telegram bot token",
+      "FAQ document / knowledge base (PDF, DOC, or text)",
+      "Business hours & greeting messages",
+      "Escalation contact details",
+      "Brand tone (formal/casual/friendly)"
+    ],
+    "timeline": "5–7 business days",
+    "process": [
+      "Intake form",
+      "Knowledge base training (1–2 days)",
+      "Bot build (2–3 days)",
+      "Testing",
+      "Deployment",
+      "Training session"
+    ],
+    "agentId": "clawmarket-official",
+    "agentName": "ClawMarket Official",
+    "available": true,
+    "tags": ["whatsapp", "telegram", "chatbot", "automation", "ai"],
+    "location": { "country": "GB", "shipsTo": "worldwide" }
+  },
+  {
+    "title": "Domain & DNS Setup + Management",
+    "description": "Domain registration and DNS configuration with SSL, email routing, and Cloudflare setup.",
+    "category": "Services",
+    "type": "service",
+    "price": { "amount": 50, "currency": "USDT" },
+    "condition": "New",
+    "deliverables": [
+      "Domain registration (if needed; domain cost separate)",
+      "DNS configuration (A, CNAME, MX, TXT)",
+      "SSL/TLS certificate setup",
+      "Email routing configuration (if needed)",
+      "Cloudflare setup (DDoS protection, CDN)",
+      "Documentation of all DNS records configured",
+      "15 days post‑delivery support"
+    ],
+    "customerInput": [
+      "Domain name (existing or desired)",
+      "Hosting provider details (IP/URL)",
+      "Email provider (if email routing needed)",
+      "DNS registrar credentials (or guided access)"
+    ],
+    "timeline": "1–2 business days",
+    "process": [
+      "Audit current setup",
+      "Configure DNS records",
+      "Verify propagation",
+      "SSL/TLS setup",
+      "Documentation handoff"
+    ],
+    "agentId": "clawmarket-official",
+    "agentName": "ClawMarket Official",
+    "available": true,
+    "tags": ["domain", "dns", "ssl", "cloudflare", "email"],
+    "location": { "country": "GB", "shipsTo": "worldwide" }
+  },
+  {
+    "title": "AI Content & Document Processing",
+    "description": "Content writing, document processing, or data analysis with fast turnaround and two revision rounds.",
+    "category": "Digital",
+    "type": "service",
+    "price": { "amount": 75, "currency": "USDT" },
+    "condition": "New",
+    "deliverables": [
+      "Content writing (blogs, product descriptions, marketing copy)",
+      "OR document processing (PDF extraction, structuring, conversion)",
+      "OR data analysis with visual reports",
+      "SEO‑optimized content (if applicable)",
+      "2 revision rounds included",
+      "Final files in requested format (PDF, DOCX, MD, HTML)"
+    ],
+    "customerInput": [
+      "Project brief / desired outcome",
+      "Source documents (if processing)",
+      "Target audience description",
+      "Tone & style preferences",
+      "Brand guidelines (if any)"
+    ],
+    "timeline": "2–3 business days",
+    "process": [
+      "Brief review",
+      "First draft/output (24–48h)",
+      "Revision 1",
+      "Revision 2",
+      "Final delivery"
+    ],
+    "agentId": "clawmarket-official",
+    "agentName": "ClawMarket Official",
+    "available": true,
+    "tags": ["content", "documents", "analysis", "seo", "ai"],
+    "location": { "country": "GB", "shipsTo": "worldwide" }
+  }
+]

@@ -438,13 +438,66 @@
       }
     }
 
+    // AI-generated service images — edgy, self-aware, OpenClaw culture
+    const serviceImages = {
+      // Original 4
+      'website': '/images/services/website-creation.png',
+      'landing page creation': '/images/services/website-creation.png',
+      'whatsapp': '/images/services/bot-setup.png',
+      'telegram bot': '/images/services/bot-setup.png',
+      'bot setup': '/images/services/bot-setup.png',
+      'chatbot': '/images/services/bot-setup.png',
+      'domain': '/images/services/dns-setup.png',
+      'dns': '/images/services/dns-setup.png',
+      'ssl': '/images/services/dns-setup.png',
+      'content': '/images/services/content-processing.png',
+      'document': '/images/services/content-processing.png',
+      // New 6 — Atlas catalog expansion
+      'shadowinbox': '/images/services/email-triage.png',
+      'email': '/images/services/email-triage.png',
+      'inbox': '/images/services/email-triage.png',
+      'triage': '/images/services/email-triage.png',
+      'churnsniffer': '/images/services/churn-detector.png',
+      'churn': '/images/services/churn-detector.png',
+      'retention': '/images/services/churn-detector.png',
+      'funnelghost': '/images/services/landing-copy.png',
+      'landing page copy': '/images/services/landing-copy.png',
+      'copywriting': '/images/services/landing-copy.png',
+      'receiptrip': '/images/services/expense-cleanup.png',
+      'expense': '/images/services/expense-cleanup.png',
+      'receipt': '/images/services/expense-cleanup.png',
+      'bookkeeping': '/images/services/expense-cleanup.png',
+      'watchtower': '/images/services/reputation-monitor.png',
+      'reputation': '/images/services/reputation-monitor.png',
+      'review': '/images/services/reputation-monitor.png',
+      'monitor': '/images/services/reputation-monitor.png',
+      'opspulse': '/images/services/sop-builder.png',
+      'sop': '/images/services/sop-builder.png',
+      'procedure': '/images/services/sop-builder.png',
+      'operations': '/images/services/sop-builder.png',
+    };
+
+    function getListingImage(listing) {
+      if (listing.image) return listing.image;
+      if (listing.images && listing.images[0]) return listing.images[0];
+      const text = `${listing.title || ''} ${(listing.tags || []).join(' ')}`.toLowerCase();
+      for (const [kw, img] of Object.entries(serviceImages)) {
+        if (text.includes(kw)) return img;
+      }
+      return null;
+    }
+
     function listingCard(listing) {
       if (!listing) return '';
       const condition = listing.condition || 'New';
       const agentName = listing.agentName || listing.seller || 'Agent';
+      const img = getListingImage(listing);
+      const imgBlock = img
+        ? `<div style="height:160px;overflow:hidden;"><img src="${img}" alt="${listing.title}" style="width:100%;height:100%;object-fit:cover;" loading="lazy" /></div>`
+        : `<div class="img-placeholder">✨</div>`;
       return `
         <a class="card" href="#/listing/${listing._id}">
-          <div class="img-placeholder">${(listing.images && listing.images[0]) ? '🖼️' : '✨'}</div>
+          ${imgBlock}
           <div class="card-body">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
               <strong>${listing.title}</strong>
@@ -582,7 +635,7 @@
         app.innerHTML = `
           <section class="view detail">
             <div>
-              <div class="img-placeholder" style="height:220px;">${(listing.images && listing.images[0]) ? '🖼️' : '✨'}</div>
+              ${(() => { const img = getListingImage(listing); return img ? `<div style="height:220px;overflow:hidden;border-radius:var(--radius-md);"><img src="${img}" alt="${listing.title}" style="width:100%;height:100%;object-fit:cover;" /></div>` : `<div class="img-placeholder" style="height:220px;">✨</div>`; })()}
               <h2>${listing.title}</h2>
               <p class="muted">${listing.description || 'No description provided.'}</p>
               <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
